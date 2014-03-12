@@ -1,11 +1,14 @@
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
+import java.awt.Frame;
 
 import javax.swing.JFrame;
 
 import java.awt.Dimension;
 
+import javax.swing.AbstractButton;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -14,17 +17,20 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import java.awt.event.KeyEvent;
 
 import javax.swing.KeyStroke;
 
+import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.InputEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
 import javax.swing.JLabel;
 import javax.swing.JTextField;
@@ -36,13 +42,20 @@ import com.jgoodies.forms.factories.FormFactory;
 import com.jgoodies.forms.layout.RowSpec;
 
 import java.awt.Font;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -50,6 +63,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 import javax.swing.JButton;
 import javax.swing.JTable;
@@ -60,6 +75,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.JScrollPane;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -68,6 +85,9 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 import javax.swing.ListSelectionModel;
 
@@ -92,31 +112,56 @@ import javax.swing.border.LineBorder;
 
 import java.awt.Cursor;
 import java.awt.Rectangle;
+
 import javax.swing.JSeparator;
+import javax.swing.JCheckBoxMenuItem;
 
 
 @SuppressWarnings("unused")
 public class Main {
 
-	private JFrame frmPstoolsV;
-	private static String appTitle = "PSTools";
-	private static String appVersion = "v1.57";
-	private static String appDescription = "Ferramenta para a inserção de produtos no Prestashop via arquivo CSV.";
-	private static String appDeveloper = "Desenvolvedor: Luciano Oliveira Borges\nIAutomate - Integração de Sistemas";
+	private static Main window;
+	public JFrame frmPstoolsV;
+	private static ResourceBundle messages;
+	private static Locale locale;
+	private static String appTitle;
+	private static String appVersion = "v1.78";
+	private static String appDescription;
+	private static String appDeveloper;
 	private static String diretorio;
 	private static JTextField textFieldNome;
 	private static JTextField textFieldUrl;
 	private static JTextField textFieldCaminho;
-	private JTable tableProdutos;
+	private static JTable tableProdutos;
 	private static DefaultTableModel model;
 	private File pathFotos;
-	private JScrollPane panelFoto;
-	private JButton btnRemover, btnCategoria, btnPreco, btnPeso, btnQuantidade;
-	private static JButton btnSalvar;
+	private static JScrollPane panelFoto;
+	private static JButton btnRemover, btnCategoria, btnPreco, btnPeso, btnQuantidade;
+	public static JButton btnSalvar;
 	private int rowsSelected[];
-	private static ImageIcon save_ok, save_alert;
+	private static ImageIcon save_ok, save_alert, save, cancel, select_folder, delete, export, category, weight, price, quantity;
 	private static JDialog dialogImage;
 	private JSeparator separator;
+	private static JButton btnExportar;
+	private static JButton btnSelecionarPasta;
+	private static JLabel lblCaminho;
+	private static JLabel lblNome;
+	private static JLabel lblUrl;
+	private static JMenuItem mntmConfiguraes;
+	private static JMenuItem mntmSair;
+	private static JMenu mnAjuda;
+	private static JMenuItem mntmSobre;
+	private static Config config;
+	private static Help ajuda;
+	private static JMenu mnArquivo;
+	private static JMenu mnFerramentas;
+	private static JMenu mnIdioma;
+	private static JCheckBoxMenuItem chckbxmntmPortugus;
+	private static JCheckBoxMenuItem chckbxmntmIngls;
+	private static JFileChooser chooserPasta;
+	private static JMenuItem mntmSuporte;
+	private static JMenuItem mntmUpdate;
+	private static JMenuItem mntmContedo;
 
 	/**
 	 * Launch the application.
@@ -125,15 +170,27 @@ public class Main {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
+					diretorio = System.getProperty("user.dir")+"/";
 					
-					Main window = new Main();
+					save_ok = new ImageIcon(Main.class.getResource("/assets/save_ok.png"));
+					save_alert = new ImageIcon(Main.class.getResource("/assets/save_alert.png"));
+					select_folder = new ImageIcon(Main.class.getResource("/assets/select_folder.png"));
+					delete = new ImageIcon(Main.class.getResource("/assets/delete.png"));
+					export = new ImageIcon(Main.class.getResource("/assets/export.png"));
+					category = new ImageIcon(Main.class.getResource("/assets/category.png"));
+					weight = new ImageIcon(Main.class.getResource("/assets/weight.png"));
+					price = new ImageIcon(Main.class.getResource("/assets/price.png"));
+					quantity = new ImageIcon(Main.class.getResource("/assets/quantity.png"));
+					
+					window = new Main();
 					window.frmPstoolsV.setVisible(true);
 					
-					diretorio = System.getProperty("user.dir")+"/";
-					save_ok = new ImageIcon(Main.class.getResource("/assets/save.png"));
-					save_alert = new ImageIcon(Main.class.getResource("/assets/alert.png"));
-					
-					//JOptionPane.showMessageDialog(null, diretorio, "Salvar", JOptionPane.INFORMATION_MESSAGE);
+					locale = Locale.getDefault();
+					setLocale(locale.getLanguage());
+					if(locale.getLanguage().equals("pt"))
+						chckbxmntmPortugus.setSelected(true);
+					else if(locale.getLanguage().equals("en"))
+						chckbxmntmIngls.setSelected(true);
 					
 					DocumentBuilderFactory dbFactory;
 					DocumentBuilder dBuilder;
@@ -147,11 +204,11 @@ public class Main {
 					 
 						doc.getDocumentElement().normalize();
 					 
-						System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+						//System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
 					 
-						System.out.println("Name : " + doc.getElementsByTagName("name").item(0).getTextContent());
-						System.out.println("Url : " + doc.getElementsByTagName("url").item(0).getTextContent());
-						System.out.println("Path : " + doc.getElementsByTagName("path").item(0).getTextContent());
+						//System.out.println("Name : " + doc.getElementsByTagName("name").item(0).getTextContent());
+						//System.out.println("Url : " + doc.getElementsByTagName("url").item(0).getTextContent());
+						//System.out.println("Path : " + doc.getElementsByTagName("path").item(0).getTextContent());
 						
 						textFieldNome.setText(doc.getElementsByTagName("name").item(0).getTextContent());
 						
@@ -159,6 +216,12 @@ public class Main {
 						
 						textFieldCaminho.setText(doc.getElementsByTagName("path").item(0).getTextContent());
 						
+						config.cfgAtivo = doc.getElementsByTagName("active").item(0).getTextContent();
+						config.cfgOferta = doc.getElementsByTagName("on_sale").item(0).getTextContent();
+						config.cfgDisponivel = doc.getElementsByTagName("available").item(0).getTextContent();
+						config.cfgExibePreco = doc.getElementsByTagName("show_price").item(0).getTextContent();
+						config.cfgDeleteImagens = doc.getElementsByTagName("delete_images").item(0).getTextContent();
+						config.cfgSomenteOnline = doc.getElementsByTagName("only_online").item(0).getTextContent();
 						
 					}
 					
@@ -169,8 +232,6 @@ public class Main {
 						doc = dBuilder.parse(xmlData);
 					 
 						doc.getDocumentElement().normalize();
-						
-						System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
 						
 						int rows = model.getRowCount(); 
 				    	for(int i = rows - 1; i >=0; i--)
@@ -226,6 +287,7 @@ public class Main {
 	 */
 	@SuppressWarnings({ "serial", "rawtypes", "unchecked" })
 	private void initialize() {
+		
 		frmPstoolsV = new JFrame();
 		frmPstoolsV.setPreferredSize(new Dimension(1280, 768));
 		frmPstoolsV.setIconImage(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/pstools-icon256.png")));
@@ -240,12 +302,11 @@ public class Main {
 		JMenuBar menuBar = new JMenuBar();
 		frmPstoolsV.setJMenuBar(menuBar);
 		
-		JMenu mnArquivo = new JMenu("Arquivo");
+		mnArquivo = new JMenu();
 		mnArquivo.setFont(new Font("Verdana", Font.BOLD, 14));
-		mnArquivo.setMnemonic('A');
 		menuBar.add(mnArquivo);
 		
-		JMenuItem mntmSair = new JMenuItem("Sair");
+		mntmSair = new JMenuItem();
 		mntmSair.setFont(new Font("Verdana", Font.BOLD, 14));
 		mntmSair.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -253,26 +314,160 @@ public class Main {
 				System.exit(0);
 			}
 		});
+		
+		config = new Config(messages);
+		config.addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentHidden(ComponentEvent arg0) {
+				frmPstoolsV.setEnabled(true);
+				if(config.isSave)
+					saveWarning();
+			}
+		});
 		mntmSair.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK));
-		mntmSair.setMnemonic('S');
 		mnArquivo.add(mntmSair);
 		
-		JMenu mnAjuda = new JMenu("Ajuda");
+		mnFerramentas = new JMenu();
+		menuBar.add(mnFerramentas);
+		
+		mnIdioma = new JMenu();
+		mnFerramentas.add(mnIdioma);
+		
+		chckbxmntmPortugus = new JCheckBoxMenuItem();
+		chckbxmntmPortugus.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				chckbxmntmIngls.setSelected(!chckbxmntmPortugus.isSelected());
+				setLocale("pt");
+			}
+		});
+		mnIdioma.add(chckbxmntmPortugus);
+		
+		chckbxmntmIngls = new JCheckBoxMenuItem();
+		chckbxmntmIngls.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				chckbxmntmPortugus.setSelected(!chckbxmntmIngls.isSelected());
+				setLocale("en");
+			}
+		});
+		mnIdioma.add(chckbxmntmIngls);
+		mntmConfiguraes = new JMenuItem();
+		mnFerramentas.add(mntmConfiguraes);
+		mntmConfiguraes.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				int x = frmPstoolsV.getX()+((frmPstoolsV.getWidth()/2)-(config.getWidth()/2));
+				int y = frmPstoolsV.getY()+((frmPstoolsV.getHeight()/2)-(config.getHeight()/2));
+				
+				frmPstoolsV.setEnabled(false);
+				config.initConfig(messages);
+				config.setLocation(x, y);
+				config.setVisible(true);
+			}
+		});
+		mntmConfiguraes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK));
+		
+		mnAjuda = new JMenu();
 		mnAjuda.setFont(new Font("Verdana", Font.BOLD, 14));
-		mnAjuda.setMnemonic('u');
 		menuBar.add(mnAjuda);
 		
-		JMenuItem mntmSobre = new JMenuItem("Sobre");
+		mntmSobre = new JMenuItem();
 		mntmSobre.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				String sobre = appTitle+" "+appVersion;
-				sobre += "\n"+appDescription;
+				sobre += "\n\n"+appDescription;
 				sobre += "\n"+appDeveloper;
-				JOptionPane.showMessageDialog(frmPstoolsV, sobre, "Sobre", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(frmPstoolsV, sobre, messages.getString("menuitem_about"), JOptionPane.INFORMATION_MESSAGE);
 			}
 		});
+		
+		mntmSuporte = new JMenuItem();
+		mntmSuporte.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				try {
+					Desktop d = Desktop.getDesktop();
+					d.browse(new URI("https://sourceforge.net/p/prestashoptools/discussion/"));
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		mntmUpdate = new JMenuItem();
+		mntmUpdate.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				try {
+					frmPstoolsV.getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+					
+					String sfXML = "", inputLine;
+					DocumentBuilderFactory dbFactory;
+					DocumentBuilder dBuilder;
+					Document doc;
+					String[] sfStr;
+					
+					URL sfRSS = new URL("http://sourceforge.net/api/file/index/project-id/2122487/rss");
+			        BufferedReader sfIn = new BufferedReader(new InputStreamReader(sfRSS.openStream()));
+			        
+			        while ((inputLine = sfIn.readLine()) != null)
+			        	sfXML += inputLine+"\n";
+			        sfIn.close();
+			        //System.out.println(xmlSourceForge);
+					
+					InputSource sfIs = new InputSource();
+					sfIs.setCharacterStream(new StringReader(sfXML));
+				
+					dbFactory = DocumentBuilderFactory.newInstance();
+					dBuilder = dbFactory.newDocumentBuilder();
+					doc = dBuilder.parse(sfIs);			 
+					doc.getDocumentElement().normalize();
+					
+					float appVersionFloat = Float.parseFloat(appVersion.replace("v", "")), sfVersionFloat;
+					
+					String versionUpdate = ""; 
+				 
+					for (int i = 0; i < doc.getElementsByTagName("item").getLength(); i++) {
+						
+						sfStr = doc.getElementsByTagName("item").item(i).getTextContent().split("\n");
+						
+						sfVersionFloat = Float.parseFloat(sfStr[1].replace("/PSTools_v", "").replace(".zip", ""));
+						
+						if(appVersionFloat < sfVersionFloat)
+							versionUpdate = sfStr[1].replace("/", "").trim();
+						
+						System.out.println("appVersion : " + appVersionFloat + " sfVersion: " + sfVersionFloat);
+					}
+					
+					frmPstoolsV.getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+					
+					if(!versionUpdate.equals("")) {
+						int confirm = JOptionPane.showConfirmDialog(frmPstoolsV, MessageFormat.format(messages.getString("confirm_update"), versionUpdate), messages.getString("confirm_update_title"), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+						if(confirm == JOptionPane.YES_OPTION) {
+							Desktop d = Desktop.getDesktop();
+							d.browse(new URI("http://sourceforge.net/p/prestashoptools/"));
+						}
+					} else
+						JOptionPane.showMessageDialog(frmPstoolsV, messages.getString("dialog_update"), messages.getString("confirm_update_title"), JOptionPane.INFORMATION_MESSAGE);
+					
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
+		
+		mntmContedo = new JMenuItem();
+		mntmContedo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
+		mntmContedo.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ajuda = new Help(messages);
+				ajuda.setVisible(true);
+			}
+		});
+		mnAjuda.add(mntmContedo);
+		mntmUpdate.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_MASK));
+		mnAjuda.add(mntmUpdate);
+		mntmSuporte.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, InputEvent.CTRL_MASK));
+		mnAjuda.add(mntmSuporte);
 		mntmSobre.setFont(new Font("Verdana", Font.BOLD, 14));
-		mntmSobre.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
+		mntmSobre.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, InputEvent.SHIFT_MASK));
 		mnAjuda.add(mntmSobre);
 		frmPstoolsV.getContentPane().setLayout(new FormLayout(new ColumnSpec[] {
 				FormFactory.RELATED_GAP_COLSPEC,
@@ -296,7 +491,7 @@ public class Main {
 				FormFactory.RELATED_GAP_ROWSPEC,
 				RowSpec.decode("25px"),
 				FormFactory.RELATED_GAP_ROWSPEC,
-				RowSpec.decode("25px"),
+				RowSpec.decode("34px"),
 				FormFactory.RELATED_GAP_ROWSPEC,
 				FormFactory.DEFAULT_ROWSPEC,
 				FormFactory.RELATED_GAP_ROWSPEC,
@@ -304,10 +499,10 @@ public class Main {
 				FormFactory.RELATED_GAP_ROWSPEC,
 				RowSpec.decode("300px:grow"),
 				FormFactory.RELATED_GAP_ROWSPEC,
-				RowSpec.decode("25px"),
+				RowSpec.decode("34px"),
 				RowSpec.decode("10dlu"),}));
 		
-		JLabel lblNome = new JLabel("Nome:");
+		lblNome = new JLabel();
 		lblNome.setHorizontalAlignment(SwingConstants.RIGHT);
 		lblNome.setFont(new Font("Verdana", Font.BOLD, 14));
 		frmPstoolsV.getContentPane().add(lblNome, "2, 2, fill, center");
@@ -317,7 +512,7 @@ public class Main {
 		frmPstoolsV.getContentPane().add(textFieldNome, "4, 2, 9, 1, left, top");
 		textFieldNome.setColumns(30);
 		
-		JLabel lblUrl = new JLabel("Url:");
+		lblUrl = new JLabel();
 		lblUrl.setHorizontalAlignment(SwingConstants.RIGHT);
 		lblUrl.setFont(new Font("Verdana", Font.BOLD, 14));
 		frmPstoolsV.getContentPane().add(lblUrl, "2, 4, right, center");
@@ -327,7 +522,7 @@ public class Main {
 		frmPstoolsV.getContentPane().add(textFieldUrl, "4, 4, 9, 1, fill, top");
 		textFieldUrl.setColumns(80);
 		
-		JLabel lblCaminho = new JLabel("Caminho:");
+		lblCaminho = new JLabel();
 		lblCaminho.setHorizontalAlignment(SwingConstants.RIGHT);
 		lblCaminho.setFont(new Font("Verdana", Font.BOLD, 14));
 		frmPstoolsV.getContentPane().add(lblCaminho, "2, 6, right, default");
@@ -339,17 +534,18 @@ public class Main {
 		frmPstoolsV.getContentPane().add(textFieldCaminho, "4, 6, 7, 1, fill, default");
 		textFieldCaminho.setColumns(80);
 		
-		JButton btnSelecionarPasta = new JButton("Selecionar Pasta");
+		btnSelecionarPasta = new JButton();
+		btnSelecionarPasta.setIcon(select_folder);
 		btnSelecionarPasta.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				JFileChooser chooser = new JFileChooser(); 
-			    chooser.setCurrentDirectory(new java.io.File(textFieldCaminho.getText()));
-			    chooser.setDialogTitle("Escolha o caminho das imagens dos produtos:");
-			    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-			    chooser.setAcceptAllFileFilterUsed(false);
-			    if (chooser.showOpenDialog(frmPstoolsV) == JFileChooser.APPROVE_OPTION) {
+				chooserPasta = new JFileChooser(); 
+			    chooserPasta.setCurrentDirectory(new java.io.File(textFieldCaminho.getText()));
+			    chooserPasta.setDialogTitle(messages.getString("choose_path"));
+			    chooserPasta.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			    chooserPasta.setAcceptAllFileFilterUsed(false);
+			    if (chooserPasta.showOpenDialog(frmPstoolsV) == JFileChooser.APPROVE_OPTION) {
 			    	
-			    	pathFotos = chooser.getSelectedFile();
+			    	pathFotos = chooserPasta.getSelectedFile();
 			    	textFieldCaminho.setText(pathFotos.getAbsolutePath());
 			    	String[] categoria = pathFotos.getAbsolutePath().split("/");
 			    	
@@ -382,8 +578,6 @@ public class Main {
 		    		btnQuantidade.setEnabled(false);
 					panelFoto.setViewportView(null);
 			    	
-			    } else {
-			      System.out.println("No Selection ");
 			    }
 			}
 		});
@@ -393,7 +587,6 @@ public class Main {
 		
 		panelFoto = new JScrollPane();
 		panelFoto.setViewportBorder(null);
-		panelFoto.setToolTipText("Clique para ver as imagens em tamanho original.");
 		panelFoto.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
@@ -409,14 +602,15 @@ public class Main {
 		separator = new JSeparator();
 		frmPstoolsV.getContentPane().add(separator, "2, 8, 13, 1");
 		
-		btnCategoria = new JButton("Categoria");
+		btnCategoria = new JButton();
+		btnCategoria.setIcon(category);
 		btnCategoria.setEnabled(false);
 		btnCategoria.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
 				rowsSelected = tableProdutos.getSelectedRows();
 				if(rowsSelected.length > 0) {
-					String categoria = JOptionPane.showInputDialog(frmPstoolsV, "Entre com o nome da categoria:", "Nova Categoria", JOptionPane.QUESTION_MESSAGE);
+					String categoria = JOptionPane.showInputDialog(frmPstoolsV, messages.getString("category_new_text"), messages.getString("category_new_title"), JOptionPane.QUESTION_MESSAGE);
 					if(categoria != null) {
 						if(!categoria.equals("")) {
 							for(int i : rowsSelected) {
@@ -429,13 +623,14 @@ public class Main {
 		});
 		frmPstoolsV.getContentPane().add(btnCategoria, "4, 10, left, default");
 		
-		btnPreco = new JButton("Preço");
+		btnPreco = new JButton();
+		btnPreco.setIcon(price);
 		btnPreco.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
 				rowsSelected = tableProdutos.getSelectedRows();
 				if(rowsSelected.length > 0) {
-					String preco = JOptionPane.showInputDialog(frmPstoolsV, "Entre com o preço:", "Novo Preço", JOptionPane.QUESTION_MESSAGE);
+					String preco = JOptionPane.showInputDialog(frmPstoolsV, messages.getString("price_new_text"), messages.getString("price_new_title"), JOptionPane.QUESTION_MESSAGE);
 					if(preco != null) {
 						if(!preco.equals("")) {
 							for(int i : rowsSelected) {
@@ -449,13 +644,14 @@ public class Main {
 		btnPreco.setEnabled(false);
 		frmPstoolsV.getContentPane().add(btnPreco, "6, 10, left, default");
 		
-		btnPeso = new JButton("Peso");
+		btnPeso = new JButton();
+		btnPeso.setIcon(weight);
 		btnPeso.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				rowsSelected = tableProdutos.getSelectedRows();
 				if(rowsSelected.length > 0) {
-					String peso = JOptionPane.showInputDialog(frmPstoolsV, "Entre com o peso:", "Novo Peso", JOptionPane.QUESTION_MESSAGE);
+					String peso = JOptionPane.showInputDialog(frmPstoolsV, messages.getString("weight_new_text"), messages.getString("weight_new_title"), JOptionPane.QUESTION_MESSAGE);
 					if(peso != null) {
 						if(!peso.equals("")) {
 							for(int i : rowsSelected) {
@@ -469,8 +665,29 @@ public class Main {
 		btnPeso.setEnabled(false);
 		frmPstoolsV.getContentPane().add(btnPeso, "8, 10, left, default");
 		
-		btnSalvar = new JButton("Salvar");
-		btnSalvar.setIcon(new ImageIcon(Main.class.getResource("/assets/save.png")));
+		btnQuantidade = new JButton();
+		btnQuantidade.setIcon(quantity);
+		btnQuantidade.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				rowsSelected = tableProdutos.getSelectedRows();
+				if(rowsSelected.length > 0) {
+					String quantidade = JOptionPane.showInputDialog(frmPstoolsV, messages.getString("quantity_new_text"), messages.getString("quantity_new_title"), JOptionPane.QUESTION_MESSAGE);
+					if(quantidade != null) {
+						if(!quantidade.equals("")) {
+							for(int i : rowsSelected) {
+								model.setValueAt(quantidade, i, 5);
+							}
+						}
+					}
+				}
+			}
+		});
+		btnQuantidade.setEnabled(false);
+		frmPstoolsV.getContentPane().add(btnQuantidade, "10, 10, left, default");
+		
+		btnSalvar = new JButton();
+		btnSalvar.setIcon(save_ok);
 		btnSalvar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
@@ -504,7 +721,36 @@ public class Main {
 					Element path = doc.createElement("path");
 					path.appendChild(doc.createTextNode(textFieldCaminho.getText()));
 					configElement.appendChild(path);
+					
+					// active element
+					Element active = doc.createElement("active");
+					active.appendChild(doc.createTextNode(config.cfgAtivo));
+					configElement.appendChild(active);
 
+					// on_sale element
+					Element on_sale = doc.createElement("on_sale");
+					on_sale.appendChild(doc.createTextNode(config.cfgOferta));
+					configElement.appendChild(on_sale);
+					
+					// available element
+					Element available = doc.createElement("available");
+					available.appendChild(doc.createTextNode(config.cfgDisponivel));
+					configElement.appendChild(available);
+					
+					// show_price element
+					Element show_price = doc.createElement("show_price");
+					show_price.appendChild(doc.createTextNode(config.cfgExibePreco));
+					configElement.appendChild(show_price);
+					
+					// delete_images element
+					Element delete_images = doc.createElement("delete_images");
+					delete_images.appendChild(doc.createTextNode(config.cfgDeleteImagens));
+					configElement.appendChild(delete_images);
+					
+					// only_online element
+					Element only_online = doc.createElement("only_online");
+					only_online.appendChild(doc.createTextNode(config.cfgSomenteOnline));
+					configElement.appendChild(only_online);
 					
 					transformerFactory = TransformerFactory.newInstance();
 					transformer = transformerFactory.newTransformer();
@@ -514,6 +760,7 @@ public class Main {
 					// Output to console for testing
 					// StreamResult result = new StreamResult(System.out);
 			 
+					transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 					transformer.transform(source, result);
 					
 					docFactory = DocumentBuilderFactory.newInstance();
@@ -580,23 +827,22 @@ public class Main {
 			 
 					// Output to console for testing
 					// StreamResult result = new StreamResult(System.out);
-			 
+					transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 					transformer.transform(source, result);
 					
-					JOptionPane.showMessageDialog(frmPstoolsV, "As configurações e os dados foram salvos com sucesso !!!", "Salvar", JOptionPane.INFORMATION_MESSAGE);
+					JOptionPane.showMessageDialog(frmPstoolsV, messages.getString("dialog_save"), messages.getString("dialog_save_title"), JOptionPane.INFORMATION_MESSAGE);
 					
 					btnSalvar.setIcon(save_ok);
+					btnSalvar.setToolTipText(messages.getString("button_save_ok"));
 					
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-		 
-				
 			}
 		});
 		
-		btnRemover = new JButton("Remover");
+		btnRemover = new JButton();
+		btnRemover.setIcon(delete);
 		btnRemover.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
@@ -606,12 +852,12 @@ public class Main {
 					for (int i : rowsSelected) {
 						codProduto += ((String) tableProdutos.getValueAt(i, 0))+" ";
 					}
-					int confirm = JOptionPane.showConfirmDialog(frmPstoolsV, "Você confirma a exclusão dos produtos: "+codProduto+"?", "Exclusão", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+					int confirm = JOptionPane.showConfirmDialog(frmPstoolsV, MessageFormat.format(messages.getString("confirm_delete"), codProduto), messages.getString("confirm_delete_title"), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 					if(confirm == JOptionPane.YES_OPTION) {
 						String[] termFoto;
 						File fileFoto;
 						
-						int delete = JOptionPane.showConfirmDialog(frmPstoolsV, "Deseja excluir também as imagens dos produtos ?", "Exclusão", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+						int delete = JOptionPane.showConfirmDialog(frmPstoolsV, messages.getString("confirm_delete_images"), messages.getString("confirm_delete_title"), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 						for (int j = rowsSelected.length-1; j >= 0; j--) {
 							model.removeRow(rowsSelected[j]);
 							if(delete == JOptionPane.YES_OPTION) {
@@ -635,36 +881,23 @@ public class Main {
 			}
 		});
 		
-		btnQuantidade = new JButton("Quantidade");
-		btnQuantidade.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				rowsSelected = tableProdutos.getSelectedRows();
-				if(rowsSelected.length > 0) {
-					String quantidade = JOptionPane.showInputDialog(frmPstoolsV, "Entre com a quantidade:", "Nova Quantidade", JOptionPane.QUESTION_MESSAGE);
-					if(quantidade != null) {
-						if(!quantidade.equals("")) {
-							for(int i : rowsSelected) {
-								model.setValueAt(quantidade, i, 5);
-							}
-						}
-					}
-				}
-			}
-		});
-		btnQuantidade.setEnabled(false);
-		frmPstoolsV.getContentPane().add(btnQuantidade, "10, 10, left, default");
 		btnRemover.setEnabled(false);
 		frmPstoolsV.getContentPane().add(btnRemover, "14, 10, right, default");
 		btnSalvar.setFont(new Font("Verdana", Font.BOLD, 14));
 		frmPstoolsV.getContentPane().add(btnSalvar, "4, 14, 3, 1, left, default");
 		
-		JButton btnExportar = new JButton("Exportar");
+		btnExportar = new JButton();
+		btnExportar.setIcon(export);
 		btnExportar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try
 				{
-					SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+					SimpleDateFormat dateFormat = null;
+					if(locale.getLanguage().equals("pt"))
+						dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+					else if(locale.getLanguage().equals("en"))
+						dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+					
 					Date date = new Date();
 					String filename = diretorio+"prestashop_"+dateFormat.format(date)+".csv";
 					
@@ -688,31 +921,31 @@ public class Main {
 				    for (int i = 0; i < tableProdutos.getRowCount(); i++) {
 				    	String[] row = new String[headers.size()];
 				    	
-				    	row[headers.indexOf("Active (0/1)")] = "1";
+				    	row[headers.indexOf("Active (0/1)")] = config.cfgAtivo;
 				    	row[headers.indexOf("Reference #")] = (String) tableProdutos.getValueAt(i, 0);
 				    	row[headers.indexOf("Name *")] = (String) tableProdutos.getValueAt(i, 1);
 				    	row[headers.indexOf("Categories (x,y,z...)")] = (String) tableProdutos.getValueAt(i, 2);
-				    	row[headers.indexOf("Price tax excluded or Price tax included")] = (String) tableProdutos.getValueAt(i, 3);
+				    	row[headers.indexOf("Price tax excluded or Price tax included")] = ((String) tableProdutos.getValueAt(i, 3)).replace(",", ".");
 				    	row[headers.indexOf("Tax rules ID")] = "0";
-				    	row[headers.indexOf("Wholesale price")] = (String) tableProdutos.getValueAt(i, 3);
-				    	row[headers.indexOf("On sale (0/1)")] = "0";
+				    	row[headers.indexOf("Wholesale price")] = ((String) tableProdutos.getValueAt(i, 3)).replace(",", ".");
+				    	row[headers.indexOf("On sale (0/1)")] = config.cfgOferta;
 				    	row[headers.indexOf("EAN13")] = "0";
-				    	row[headers.indexOf("Weight")] = (String) tableProdutos.getValueAt(i, 4);
+				    	row[headers.indexOf("Weight")] = ((String) tableProdutos.getValueAt(i, 4)).replace(",", ".");
 				    	row[headers.indexOf("Quantity")] = (String) tableProdutos.getValueAt(i, 5);
 				    	row[headers.indexOf("Short description")] = (String) tableProdutos.getValueAt(i, 6);
 				    	row[headers.indexOf("Description")] = (String) tableProdutos.getValueAt(i, 6);
 				    	String urlrew = Normalizer.normalize((String) tableProdutos.getValueAt(i, 1), Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
 				    	urlrew = urlrew.toLowerCase().replaceAll(" ", "-");
 				    	row[headers.indexOf("URL rewritten")] = urlrew;
-				    	row[headers.indexOf("Available for order (0 = No, 1 = Yes)")] = "1";
-				    	row[headers.indexOf("Show price (0 = No, 1 = Yes)")] = "1";
+				    	row[headers.indexOf("Available for order (0 = No, 1 = Yes)")] = config.cfgDisponivel;
+				    	row[headers.indexOf("Show price (0 = No, 1 = Yes)")] = config.cfgExibePreco;
 				    	String[] images = ((String) tableProdutos.getValueAt(i, 7)).split(",");
 				    	for (int j = 0; j < images.length; j++) {
 				    		images[j] = textFieldUrl.getText()+"img/tmp/"+images[j];
 						}
 				    	row[headers.indexOf("Image URLs (x,y,z...)")] = StringUtils.join(images, ",");
-				    	row[headers.indexOf("Delete existing images (0 = No, 1 = Yes)")] = "1";
-				    	row[headers.indexOf("Available online only (0 = No, 1 = Yes)")] = "0";
+				    	row[headers.indexOf("Delete existing images (0 = No, 1 = Yes)")] = config.cfgDeleteImagens;
+				    	row[headers.indexOf("Available online only (0 = No, 1 = Yes)")] = config.cfgSomenteOnline;
 				    	row[headers.indexOf("Condition")] = "new";
 				    	
 					    //writer.append((String) tableProdutos.getValueAt(i, 0) + ";");
@@ -723,7 +956,7 @@ public class Main {
 				    writer.flush();
 				    writer.close();
 				    
-				    JOptionPane.showMessageDialog(frmPstoolsV, "O arquivo "+filename+" foi salvo com sucesso !!!", "Salvar", JOptionPane.INFORMATION_MESSAGE);
+				    JOptionPane.showMessageDialog(frmPstoolsV, MessageFormat.format(messages.getString("dialog_export"), filename), messages.getString("dialog_export_title"), JOptionPane.INFORMATION_MESSAGE);
 				}
 				catch(Exception e)
 				{
@@ -817,7 +1050,6 @@ public class Main {
 		
 		scrollPane.setViewportView(tableProdutos);
 		
-		
 	}
 	private void viewImage(int lastRow) {
 		try {
@@ -870,7 +1102,6 @@ public class Main {
 	    		btnQuantidade.setEnabled(false);
 	    	}
 		} catch (Exception e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 	}
@@ -928,8 +1159,65 @@ public class Main {
 				frmPstoolsV.setEnabled(false);
 			}
 		} catch (Exception e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+	}
+	public void saveWarning() {
+		btnSalvar.setIcon(save_alert);
+		btnSalvar.setToolTipText(messages.getString("button_save_alert"));
+	}
+	public static void setLocale(String lang) {
+		locale = new Locale(lang);
+		Locale.setDefault(locale);
+		messages = ResourceBundle.getBundle("i18n.lang", locale);
+		
+		appTitle = messages.getString("app_title");
+		appDescription = messages.getString("app_description");
+		appDeveloper = messages.getString("app_developer");
+		
+		window.frmPstoolsV.setTitle(appTitle+" "+appVersion+" - "+appDescription);
+		
+		mnArquivo.setText(messages.getString("menu_file"));
+		mntmSair.setText(messages.getString("menuitem_exit"));
+		mnFerramentas.setText(messages.getString("menu_tools"));
+		mnIdioma.setText(messages.getString("menu_language"));
+		chckbxmntmPortugus.setText(messages.getString("menuitem_pt"));
+		chckbxmntmIngls.setText(messages.getString("menuitem_en"));
+		mntmConfiguraes.setText(messages.getString("menuitem_config"));
+		mnAjuda.setText(messages.getString("menu_help"));
+		mntmContedo.setText(messages.getString("menuitem_content"));
+		mntmUpdate.setText(messages.getString("menuitem_update"));
+		mntmSuporte.setText(messages.getString("menuitem_support"));
+		mntmSobre.setText(messages.getString("menuitem_about"));
+		
+		lblNome.setText(messages.getString("label_name"));
+		lblUrl.setText(messages.getString("label_url"));
+		lblCaminho.setText(messages.getString("label_path"));
+		
+		btnSelecionarPasta.setText(messages.getString("button_select_folder"));
+		btnCategoria.setText(messages.getString("button_category"));
+		btnPeso.setText(messages.getString("button_weight"));
+		btnPreco.setText(messages.getString("button_price"));
+		btnQuantidade.setText(messages.getString("button_quantity"));
+		btnRemover.setText(messages.getString("button_delete"));
+		btnSalvar.setText(messages.getString("button_save"));
+		btnExportar.setText(messages.getString("button_export"));
+		
+		if(btnSalvar.getIcon().equals(save_ok))
+			btnSalvar.setToolTipText(messages.getString("button_save_ok"));
+		else
+			btnSalvar.setToolTipText(messages.getString("button_save_alert"));
+		
+		panelFoto.setToolTipText(messages.getString("panel_images"));
+		
+		tableProdutos.getColumnModel().getColumn(0).setHeaderValue(messages.getString("table_header0"));
+		tableProdutos.getColumnModel().getColumn(1).setHeaderValue(messages.getString("table_header1"));
+		tableProdutos.getColumnModel().getColumn(2).setHeaderValue(messages.getString("table_header2"));
+		tableProdutos.getColumnModel().getColumn(3).setHeaderValue(messages.getString("table_header3"));
+		tableProdutos.getColumnModel().getColumn(4).setHeaderValue(messages.getString("table_header4"));
+		tableProdutos.getColumnModel().getColumn(5).setHeaderValue(messages.getString("table_header5"));
+		tableProdutos.getColumnModel().getColumn(6).setHeaderValue(messages.getString("table_header6"));
+		tableProdutos.getColumnModel().getColumn(7).setHeaderValue(messages.getString("table_header7"));
+		
 	}
 }
