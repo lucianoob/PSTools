@@ -23,6 +23,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.util.ResourceBundle;
+import java.awt.Font;
 
 
 @SuppressWarnings("serial")
@@ -61,10 +62,10 @@ public class Config extends JFrame {
 		save = new ImageIcon(Main.class.getResource("/assets/save.png"));
 		cancel = new ImageIcon(Main.class.getResource("/assets/cancel.png"));
 		
-		setIconImage(Toolkit.getDefaultToolkit().getImage(Config.class.getResource("/assets/pstools-icon256.png")));
+		setIconImage(Toolkit.getDefaultToolkit().getImage(Config.class.getResource("/assets/config.png")));
 		setResizable(false);
 		setAlwaysOnTop(true);
-		setBounds(100, 100, 377, 292);
+		setBounds(100, 100, 377, 311);
 		
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -102,6 +103,7 @@ public class Config extends JFrame {
 				FormFactory.RELATED_GAP_ROWSPEC,}));
 		
 		lblAtivo = new JLabel();
+		lblAtivo.setFont(new Font("Dialog", Font.BOLD, 14));
 		lblAtivo.setHorizontalAlignment(SwingConstants.RIGHT);
 		panelForm.add(lblAtivo, "2, 2, 3, 1");
 		
@@ -109,6 +111,7 @@ public class Config extends JFrame {
 		panelForm.add(chckbxAtivo, "6, 2");
 		
 		lblEmOferta = new JLabel();
+		lblEmOferta.setFont(new Font("Dialog", Font.BOLD, 14));
 		lblEmOferta.setHorizontalAlignment(SwingConstants.RIGHT);
 		panelForm.add(lblEmOferta, "2, 4, 3, 1");
 		
@@ -116,6 +119,7 @@ public class Config extends JFrame {
 		panelForm.add(chckbxEmOferta, "6, 4");
 		
 		lblDisponvel = new JLabel();
+		lblDisponvel.setFont(new Font("Dialog", Font.BOLD, 14));
 		lblDisponvel.setHorizontalAlignment(SwingConstants.RIGHT);
 		panelForm.add(lblDisponvel, "2, 6, 3, 1");
 		
@@ -123,6 +127,7 @@ public class Config extends JFrame {
 		panelForm.add(chckbxDisponvel, "6, 6");
 		
 		lblExibePreo = new JLabel();
+		lblExibePreo.setFont(new Font("Dialog", Font.BOLD, 14));
 		lblExibePreo.setHorizontalAlignment(SwingConstants.RIGHT);
 		panelForm.add(lblExibePreo, "2, 8, 3, 1");
 		
@@ -130,6 +135,7 @@ public class Config extends JFrame {
 		panelForm.add(chckbxExibePreo, "6, 8");
 		
 		lblDeleteImagens = new JLabel();
+		lblDeleteImagens.setFont(new Font("Dialog", Font.BOLD, 14));
 		lblDeleteImagens.setHorizontalAlignment(SwingConstants.RIGHT);
 		panelForm.add(lblDeleteImagens, "2, 10, 3, 1");
 		
@@ -137,6 +143,7 @@ public class Config extends JFrame {
 		panelForm.add(chckbxDeleteImagens, "6, 10");
 		
 		lblSomenteOnline = new JLabel();
+		lblSomenteOnline.setFont(new Font("Dialog", Font.BOLD, 14));
 		lblSomenteOnline.setHorizontalAlignment(SwingConstants.RIGHT);
 		panelForm.add(lblSomenteOnline, "2, 12, 3, 1");
 		
@@ -144,9 +151,10 @@ public class Config extends JFrame {
 		panelForm.add(chckbxSomenteOnline, "6, 12");
 		
 		btnCancelar = new JButton();
+		btnCancelar.setFont(new Font("Dialog", Font.BOLD, 14));
 		btnCancelar.setMinimumSize(new Dimension(50, 34));
 		btnCancelar.setMaximumSize(new Dimension(9999, 9999));
-		btnCancelar.setPreferredSize(new Dimension(130, 34));
+		btnCancelar.setPreferredSize(new Dimension(140, 34));
 		btnCancelar.setIcon(cancel);
 		btnCancelar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -156,6 +164,7 @@ public class Config extends JFrame {
 		panelForm.add(btnCancelar, "2, 18, left, bottom");
 		
 		btnSalvar = new JButton();
+		btnSalvar.setFont(new Font("Dialog", Font.BOLD, 14));
 		btnSalvar.setMaximumSize(new Dimension(999, 999));
 		btnSalvar.setIcon(save);
 		btnSalvar.addActionListener(new ActionListener() {
@@ -166,7 +175,7 @@ public class Config extends JFrame {
 				config.setVisible(false);
 			}
 		});
-		btnSalvar.setPreferredSize(new Dimension(130, 34));
+		btnSalvar.setPreferredSize(new Dimension(140, 34));
 		btnSalvar.setMinimumSize(new Dimension(50, 34));
 		panelForm.add(btnSalvar, "4, 18, 3, 1, right, bottom");
 		
