@@ -88,6 +88,7 @@ public class Codes extends JFrame {
 		contentPane.add(textFieldFolder, "4, 2, 3, 1, fill, fill");
 		textFieldFolder.setColumns(10);
 		
+		folder = new File(path);
 		JButton btnFolder = new JButton(messages.getString("code_button_folder"));
 		btnFolder.setIcon(new ImageIcon(Codes.class.getResource("/assets/select_folder.png")));
 		btnFolder.addActionListener(new ActionListener() {

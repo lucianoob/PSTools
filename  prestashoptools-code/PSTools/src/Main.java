@@ -127,7 +127,7 @@ public class Main {
 	private static ResourceBundle messages;
 	private static Locale locale;
 	private static String appTitle;
-	private static String appVersion = "v1.85";
+	private static String appVersion = "v1.86";
 	private static String appDescription;
 	private static String appDeveloper;
 	private static String diretorio;
