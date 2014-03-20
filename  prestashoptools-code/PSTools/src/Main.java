@@ -127,9 +127,10 @@ public class Main {
 	private static ResourceBundle messages;
 	private static Locale locale;
 	private static String appTitle;
-	private static String appVersion = "v1.86";
+	private static String appVersion = "v1.93";
 	private static String appDescription;
 	private static String appDeveloper;
+	private static String appConfigFile = "pstools.cfg";
 	private static String diretorio;
 	private static JTextField textFieldNome;
 	private static JTextField textFieldUrl;
@@ -193,14 +194,14 @@ public class Main {
 					setLocale(locale.getLanguage());
 					if(locale.getLanguage().equals("pt"))
 						chckbxmntmPortugus.setSelected(true);
-					else if(locale.getLanguage().equals("en"))
+					else
 						chckbxmntmIngls.setSelected(true);
 					
 					DocumentBuilderFactory dbFactory;
 					DocumentBuilder dBuilder;
 					Document doc;
 					
-					File xmlConfig = new File(diretorio+"config.xml");
+					File xmlConfig = new File(diretorio+appConfigFile);
 					if(xmlConfig.exists()) {
 						dbFactory = DocumentBuilderFactory.newInstance();
 						dBuilder = dbFactory.newDocumentBuilder();
@@ -226,16 +227,6 @@ public class Main {
 						config.cfgExibePreco = doc.getElementsByTagName("show_price").item(0).getTextContent();
 						config.cfgDeleteImagens = doc.getElementsByTagName("delete_images").item(0).getTextContent();
 						config.cfgSomenteOnline = doc.getElementsByTagName("only_online").item(0).getTextContent();
-						
-					}
-					
-					File xmlData = new File(diretorio+"data.xml");
-					if(xmlData.exists()) {
-						dbFactory = DocumentBuilderFactory.newInstance();
-						dBuilder = dbFactory.newDocumentBuilder();
-						doc = dBuilder.parse(xmlData);
-					 
-						doc.getDocumentElement().normalize();
 						
 						int rows = model.getRowCount(); 
 				    	for(int i = rows - 1; i >=0; i--)
@@ -749,8 +740,11 @@ public class Main {
 					
 					// root elements
 					Document doc = docBuilder.newDocument();
+					Element rootElement = doc.createElement("pstools");
+					doc.appendChild(rootElement);
+					
+					// config element
 					Element configElement = doc.createElement("config");
-					doc.appendChild(configElement);
 			 
 					// name element
 					Element name = doc.createElement("name");
@@ -797,24 +791,9 @@ public class Main {
 					only_online.appendChild(doc.createTextNode(config.cfgSomenteOnline));
 					configElement.appendChild(only_online);
 					
-					transformerFactory = TransformerFactory.newInstance();
-					transformer = transformerFactory.newTransformer();
-					source = new DOMSource(doc);
-					result = new StreamResult(new File(diretorio+"config.xml"));
-			 
-					// Output to console for testing
-					// StreamResult result = new StreamResult(System.out);
-			 
-					transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-					transformer.transform(source, result);
+					rootElement.appendChild(configElement);
 					
-					docFactory = DocumentBuilderFactory.newInstance();
-					docBuilder = docFactory.newDocumentBuilder();
-					
-					// root elements
-					doc = docBuilder.newDocument();
 					Element dataElement = doc.createElement("data");
-					doc.appendChild(dataElement);
 					
 					Element rowElement;
 					
@@ -864,15 +843,18 @@ public class Main {
 						photos.appendChild(doc.createTextNode(String.valueOf(tableProdutos.getValueAt(i, 7))));
 						rowElement.appendChild(photos);
 					}
+					
+					rootElement.appendChild(dataElement);
 			 
 					transformerFactory = TransformerFactory.newInstance();
 					transformer = transformerFactory.newTransformer();
 					source = new DOMSource(doc);
-					result = new StreamResult(new File(diretorio+"data.xml"));
+					result = new StreamResult(new File(diretorio+appConfigFile));
 			 
 					// Output to console for testing
 					// StreamResult result = new StreamResult(System.out);
 					transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+					transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");
 					transformer.transform(source, result);
 					
 					JOptionPane.showMessageDialog(frmPstoolsV, messages.getString("dialog_save"), messages.getString("dialog_save_title"), JOptionPane.INFORMATION_MESSAGE);
@@ -1039,7 +1021,6 @@ public class Main {
 		tableProdutos.setFont(new Font("Verdana", Font.BOLD, 14));
 		tableProdutos.setModel(new DefaultTableModel(
 			new Object[][] {
-				{null, null, null, null, null, null, null, null},
 			},
 			new String[] {
 				"Refer\u00EAncia", "Nome", "Categoria", "Pre\u00E7o", "Peso", "Quantidade", "Descri\u00E7\u00E3o", "Fotos"
@@ -1050,12 +1031,6 @@ public class Main {
 			};
 			public Class getColumnClass(int columnIndex) {
 				return columnTypes[columnIndex];
-			}
-			boolean[] columnEditables = new boolean[] {
-				false, true, true, true, true, true, true, false
-			};
-			public boolean isCellEditable(int row, int column) {
-				return columnEditables[column];
 			}
 		});
 		tableProdutos.getColumnModel().getColumn(0).setResizable(false);
@@ -1085,17 +1060,11 @@ public class Main {
 		
 		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment( JLabel.CENTER );
-		tableProdutos.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
-		tableProdutos.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
-		tableProdutos.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
-		tableProdutos.getColumnModel().getColumn(5).setCellRenderer(centerRenderer);
 		
 		
 		DefaultTableCellRenderer fixRenderer = new DefaultTableCellRenderer();
 		fixRenderer.setBackground(new Color(204, 204, 204));
 		fixRenderer.setHorizontalAlignment( JLabel.CENTER );
-		tableProdutos.getColumnModel().getColumn(0).setCellRenderer(fixRenderer);
-		tableProdutos.getColumnModel().getColumn(7).setCellRenderer(fixRenderer);
 		
 		
 		scrollPane.setViewportView(tableProdutos);
@@ -1260,15 +1229,6 @@ public class Main {
 			btnSalvar.setToolTipText(messages.getString("button_save_alert"));
 		
 		panelFoto.setToolTipText(messages.getString("panel_images"));
-		
-		tableProdutos.getColumnModel().getColumn(0).setHeaderValue(messages.getString("table_header0"));
-		tableProdutos.getColumnModel().getColumn(1).setHeaderValue(messages.getString("table_header1"));
-		tableProdutos.getColumnModel().getColumn(2).setHeaderValue(messages.getString("table_header2"));
-		tableProdutos.getColumnModel().getColumn(3).setHeaderValue(messages.getString("table_header3"));
-		tableProdutos.getColumnModel().getColumn(4).setHeaderValue(messages.getString("table_header4"));
-		tableProdutos.getColumnModel().getColumn(5).setHeaderValue(messages.getString("table_header5"));
-		tableProdutos.getColumnModel().getColumn(6).setHeaderValue(messages.getString("table_header6"));
-		tableProdutos.getColumnModel().getColumn(7).setHeaderValue(messages.getString("table_header7"));
 		
 	}
 }
