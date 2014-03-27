@@ -127,7 +127,7 @@ public class Main {
 	private static ResourceBundle messages;
 	private static Locale locale;
 	private static String appTitle;
-	private static String appVersion = "v1.93";
+	private static String appVersion = "v1.98";
 	private static String appDescription;
 	private static String appDeveloper;
 	private static String appConfigFile = "pstools.cfg";
@@ -326,12 +326,12 @@ public class Main {
 		mnArquivo.add(mntmSair);
 		
 		mnFerramentas = new JMenu();
-		mnFerramentas.setFont(new Font("Dialog", Font.BOLD, 14));
+		mnFerramentas.setFont(new Font("Verdana", Font.BOLD, 14));
 		menuBar.add(mnFerramentas);
 		
 		mnIdioma = new JMenu();
 		mnIdioma.setIcon(new ImageIcon(Main.class.getResource("/assets/language.png")));
-		mnIdioma.setFont(new Font("Dialog", Font.BOLD, 14));
+		mnIdioma.setFont(new Font("Verdana", Font.BOLD, 14));
 		mnFerramentas.add(mnIdioma);
 		
 		chckbxmntmPortugus = new JCheckBoxMenuItem();
@@ -363,11 +363,11 @@ public class Main {
 			}
 		});
 		mntmGerarCdigos.setIcon(new ImageIcon(Main.class.getResource("/assets/code.png")));
-		mntmGerarCdigos.setFont(new Font("Dialog", Font.BOLD, 14));
+		mntmGerarCdigos.setFont(new Font("Verdana", Font.BOLD, 14));
 		mnFerramentas.add(mntmGerarCdigos);
 		mntmConfiguraes = new JMenuItem();
 		mntmConfiguraes.setIcon(new ImageIcon(Main.class.getResource("/assets/config.png")));
-		mntmConfiguraes.setFont(new Font("Dialog", Font.BOLD, 14));
+		mntmConfiguraes.setFont(new Font("Verdana", Font.BOLD, 14));
 		mnFerramentas.add(mntmConfiguraes);
 		mntmConfiguraes.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -399,7 +399,7 @@ public class Main {
 		
 		mntmSuporte = new JMenuItem();
 		mntmSuporte.setIcon(new ImageIcon(Main.class.getResource("/assets/support.png")));
-		mntmSuporte.setFont(new Font("Dialog", Font.BOLD, 14));
+		mntmSuporte.setFont(new Font("Verdana", Font.BOLD, 14));
 		mntmSuporte.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
@@ -413,7 +413,7 @@ public class Main {
 		
 		mntmContedo = new JMenuItem();
 		mntmContedo.setIcon(new ImageIcon(Main.class.getResource("/assets/help.png")));
-		mntmContedo.setFont(new Font("Dialog", Font.BOLD, 14));
+		mntmContedo.setFont(new Font("Verdana", Font.BOLD, 14));
 		mntmContedo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
 		mntmContedo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -424,7 +424,7 @@ public class Main {
 		
 		mntmUpdate = new JMenuItem();
 		mntmUpdate.setIcon(new ImageIcon(Main.class.getResource("/assets/update.png")));
-		mntmUpdate.setFont(new Font("Dialog", Font.BOLD, 14));
+		mntmUpdate.setFont(new Font("Verdana", Font.BOLD, 14));
 		mntmUpdate.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
@@ -466,7 +466,7 @@ public class Main {
 						if(appVersionFloat < sfVersionFloat)
 							versionUpdate = sfStr[1].replace("/", "").trim();
 						
-						System.out.println("appVersion : " + appVersionFloat + " sfVersion: " + sfVersionFloat);
+						//System.out.println("appVersion : " + appVersionFloat + " sfVersion: " + sfVersionFloat);
 					}
 					
 					frmPstoolsV.getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -1015,6 +1015,10 @@ public class Main {
 			}
 		});
 		
+		//new String[] {
+			//	"Refer\u00EAncia", "Nome", "Categoria", "Pre\u00E7o", "Peso", "Quantidade", "Descri\u00E7\u00E3o", "Fotos"
+			//}
+		
 		tableProdutos.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		tableProdutos.setRowMargin(2);
 		tableProdutos.setRowHeight(25);
@@ -1023,7 +1027,7 @@ public class Main {
 			new Object[][] {
 			},
 			new String[] {
-				"Refer\u00EAncia", "Nome", "Categoria", "Pre\u00E7o", "Peso", "Quantidade", "Descri\u00E7\u00E3o", "Fotos"
+				"", "", "", "", "", "", "", ""
 			}
 		) {
 			Class[] columnTypes = new Class[] {
@@ -1213,6 +1217,15 @@ public class Main {
 		lblNome.setText(messages.getString("label_name"));
 		lblUrl.setText(messages.getString("label_url"));
 		lblCaminho.setText(messages.getString("label_path"));
+		
+		tableProdutos.getTableHeader().getColumnModel().getColumn(0).setHeaderValue(messages.getString("table_header0"));
+		tableProdutos.getTableHeader().getColumnModel().getColumn(1).setHeaderValue(messages.getString("table_header1"));
+		tableProdutos.getTableHeader().getColumnModel().getColumn(2).setHeaderValue(messages.getString("table_header2"));
+		tableProdutos.getTableHeader().getColumnModel().getColumn(3).setHeaderValue(messages.getString("table_header3"));
+		tableProdutos.getTableHeader().getColumnModel().getColumn(4).setHeaderValue(messages.getString("table_header4"));
+		tableProdutos.getTableHeader().getColumnModel().getColumn(5).setHeaderValue(messages.getString("table_header5"));
+		tableProdutos.getTableHeader().getColumnModel().getColumn(6).setHeaderValue(messages.getString("table_header6"));
+		tableProdutos.getTableHeader().getColumnModel().getColumn(7).setHeaderValue(messages.getString("table_header7"));
 		
 		btnSelecionarPasta.setText(messages.getString("button_select_folder"));
 		btnCategoria.setText(messages.getString("button_category"));
