@@ -38,7 +38,7 @@ public class Codes extends JFrame {
 	private JTextField textFieldFirst;
 	private JButton btnGenerate;
 	private JFileChooser chooserFolder;
-	private File folder;
+	public File folder;
 	private ResourceBundle messages;
 
 	/**
@@ -53,7 +53,7 @@ public class Codes extends JFrame {
 		setTitle(messages.getString("code_title"));
 		setIconImage(Toolkit.getDefaultToolkit().getImage(Codes.class.getResource("/assets/code.png")));
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-		setBounds(100, 100, 863, 207);
+		setBounds(100, 100, 896, 207);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -162,7 +162,6 @@ public class Codes extends JFrame {
 		            		extension = file.substring(file.lastIndexOf("."), file.length());
 			            	newName = path+"/"+reference+String.format("%0"+padding+"d", counter)+extension;
 			                files[i].renameTo(new File(newName));
-			            	
 			            	//System.out.println(newName);
 		            	}
 		            }

@@ -127,7 +127,7 @@ public class Main {
 	private static ResourceBundle messages;
 	private static Locale locale;
 	private static String appTitle;
-	private static String appVersion = "v1.98";
+	private static String appVersion = "v2.24";
 	private static String appDescription;
 	private static String appDeveloper;
 	private static String appConfigFile = "pstools.cfg";
@@ -161,12 +161,16 @@ public class Main {
 	private static JMenu mnIdioma;
 	private static JCheckBoxMenuItem chckbxmntmPortugus;
 	private static JCheckBoxMenuItem chckbxmntmIngls;
+	private static JCheckBoxMenuItem chckbxmntmEspanhol;
 	private static JFileChooser chooserPasta;
 	private static JMenuItem mntmSuporte;
 	private static JMenuItem mntmUpdate;
 	private static JMenuItem mntmContedo;
 	private static JMenuItem mntmGerarCdigos;
 	private static JLabel lblStatus;
+	private Codes gerarCodigos;
+	private static JMenuItem mntmLerconfiguraes;
+	private static JLabel lblConfig;
 
 	/**
 	 * Launch the application.
@@ -175,7 +179,6 @@ public class Main {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					diretorio = System.getProperty("user.dir")+"/";
 					
 					save_ok = new ImageIcon(Main.class.getResource("/assets/save_ok.png"));
 					save_alert = new ImageIcon(Main.class.getResource("/assets/save_alert.png"));
@@ -192,76 +195,9 @@ public class Main {
 					
 					locale = Locale.getDefault();
 					setLocale(locale.getLanguage());
-					if(locale.getLanguage().equals("pt"))
-						chckbxmntmPortugus.setSelected(true);
-					else
-						chckbxmntmIngls.setSelected(true);
+					setCheckBoxLocale(locale.getLanguage());
 					
-					DocumentBuilderFactory dbFactory;
-					DocumentBuilder dBuilder;
-					Document doc;
-					
-					File xmlConfig = new File(diretorio+appConfigFile);
-					if(xmlConfig.exists()) {
-						dbFactory = DocumentBuilderFactory.newInstance();
-						dBuilder = dbFactory.newDocumentBuilder();
-						doc = dBuilder.parse(xmlConfig);
-					 
-						doc.getDocumentElement().normalize();
-					 
-						//System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
-					 
-						//System.out.println("Name : " + doc.getElementsByTagName("name").item(0).getTextContent());
-						//System.out.println("Url : " + doc.getElementsByTagName("url").item(0).getTextContent());
-						//System.out.println("Path : " + doc.getElementsByTagName("path").item(0).getTextContent());
-						
-						textFieldNome.setText(doc.getElementsByTagName("name").item(0).getTextContent());
-						
-						textFieldUrl.setText(doc.getElementsByTagName("url").item(0).getTextContent());
-						
-						textFieldCaminho.setText(doc.getElementsByTagName("path").item(0).getTextContent());
-						
-						config.cfgAtivo = doc.getElementsByTagName("active").item(0).getTextContent();
-						config.cfgOferta = doc.getElementsByTagName("on_sale").item(0).getTextContent();
-						config.cfgDisponivel = doc.getElementsByTagName("available").item(0).getTextContent();
-						config.cfgExibePreco = doc.getElementsByTagName("show_price").item(0).getTextContent();
-						config.cfgDeleteImagens = doc.getElementsByTagName("delete_images").item(0).getTextContent();
-						config.cfgSomenteOnline = doc.getElementsByTagName("only_online").item(0).getTextContent();
-						
-						int rows = model.getRowCount(); 
-				    	for(int i = rows - 1; i >=0; i--)
-				    	   model.removeRow(i); 
-						
-						// "Refer\u00EAncia", "Nome", "Pre\u00E7o", "Peso", "Quantidade", "Descri\u00E7\u00E3o", "Fotos"
-						 
-						for (int i = 0; i < doc.getElementsByTagName("reference").getLength(); i++) {
-							
-							String reference = doc.getElementsByTagName("reference").item(i).getTextContent();
-							String name = doc.getElementsByTagName("name").item(i).getTextContent();
-							String category = doc.getElementsByTagName("category").item(i).getTextContent();
-							String price = doc.getElementsByTagName("price").item(i).getTextContent();
-							String weight = doc.getElementsByTagName("weight").item(i).getTextContent();
-							String quantity = doc.getElementsByTagName("quantity").item(i).getTextContent();
-							String description = doc.getElementsByTagName("description").item(i).getTextContent();
-							String photos = doc.getElementsByTagName("photos").item(i).getTextContent();
-							
-							/*System.out.println("Reference : " + reference);
-							System.out.println("Name : " + name);
-							System.out.println("Price : " + price);
-							System.out.println("Weight : " + weight);
-							System.out.println("Quantity : " + quantity);
-							System.out.println("Description : " + description);
-							System.out.println("Photos : " + photos);*/
-							
-							model.addRow(new Object[]{reference, name, category, price, weight, quantity, description, photos});
-						}
-						model.addTableModelListener(new TableModelListener() {
-							public void tableChanged (TableModelEvent e) {
-								btnSalvar.setIcon(save_alert);
-							}
-						});
-						lblStatus.setText(MessageFormat.format(messages.getString("status_total_products"), doc.getElementsByTagName("reference").getLength()));
-					}
+					loadConfig(System.getProperty("user.dir")+"/", false);
 					
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -322,6 +258,23 @@ public class Main {
 					saveWarning();
 			}
 		});
+		
+		mntmLerconfiguraes = new JMenuItem();
+		mntmLerconfiguraes.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				chooserPasta = new JFileChooser(); 
+			    chooserPasta.setCurrentDirectory(new File(diretorio));
+			    chooserPasta.setDialogTitle(messages.getString("config_choose_path"));
+			    chooserPasta.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			    chooserPasta.setAcceptAllFileFilterUsed(false);
+			    if (chooserPasta.showOpenDialog(frmPstoolsV) == JFileChooser.APPROVE_OPTION) {
+			    	loadConfig(chooserPasta.getSelectedFile().getAbsolutePath()+"/", true);
+			    }
+			}
+		});
+		mntmLerconfiguraes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK));
+		mntmLerconfiguraes.setIcon(new ImageIcon(Main.class.getResource("/assets/config_load.png")));
+		mnArquivo.add(mntmLerconfiguraes);
 		mntmSair.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK));
 		mnArquivo.add(mntmSair);
 		
@@ -338,8 +291,7 @@ public class Main {
 		chckbxmntmPortugus.setIcon(new ImageIcon(Main.class.getResource("/assets/pt.png")));
 		chckbxmntmPortugus.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				chckbxmntmIngls.setSelected(!chckbxmntmPortugus.isSelected());
-				setLocale("pt");
+				setCheckBoxLocale("pt");
 			}
 		});
 		mnIdioma.add(chckbxmntmPortugus);
@@ -348,17 +300,34 @@ public class Main {
 		chckbxmntmIngls.setIcon(new ImageIcon(Main.class.getResource("/assets/en.png")));
 		chckbxmntmIngls.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				chckbxmntmPortugus.setSelected(!chckbxmntmIngls.isSelected());
-				setLocale("en");
+				setCheckBoxLocale("en");
 			}
 		});
 		mnIdioma.add(chckbxmntmIngls);
+		
+		chckbxmntmEspanhol = new JCheckBoxMenuItem();
+		chckbxmntmEspanhol.setIcon(new ImageIcon(Main.class.getResource("/assets/es.png")));
+		chckbxmntmEspanhol.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				setCheckBoxLocale("es");
+			}
+		});
+		mnIdioma.add(chckbxmntmEspanhol);
+		
 		
 		mntmGerarCdigos = new JMenuItem();
 		mntmGerarCdigos.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
 		mntmGerarCdigos.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				Codes gerarCodigos = new Codes(messages, textFieldCaminho.getText());
+				gerarCodigos = new Codes(messages, textFieldCaminho.getText());
+				gerarCodigos.addComponentListener(new ComponentListener() {
+					public void componentHidden(ComponentEvent arg0) {
+						listPhotos(gerarCodigos.folder);					
+					}
+					public void componentMoved(ComponentEvent arg0) {}
+					public void componentResized(ComponentEvent arg0) {}
+					public void componentShown(ComponentEvent arg0) {}
+				});
 				gerarCodigos.setVisible(true);
 			}
 		});
@@ -524,6 +493,8 @@ public class Main {
 				RowSpec.decode("300px:grow"),
 				FormFactory.RELATED_GAP_ROWSPEC,
 				RowSpec.decode("34px"),
+				FormFactory.RELATED_GAP_ROWSPEC,
+				FormFactory.DEFAULT_ROWSPEC,
 				FormFactory.RELATED_GAP_ROWSPEC,}));
 		
 		lblNome = new JLabel();
@@ -582,48 +553,7 @@ public class Main {
 			    chooserPasta.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 			    chooserPasta.setAcceptAllFileFilterUsed(false);
 			    if (chooserPasta.showOpenDialog(frmPstoolsV) == JFileChooser.APPROVE_OPTION) {
-			    	
-			    	pathFotos = chooserPasta.getSelectedFile();
-			    	textFieldCaminho.setText(pathFotos.getAbsolutePath());
-			    	String[] categoria = pathFotos.getAbsolutePath().split("/");
-			    	
-			    	int rows = model.getRowCount(); 
-			    	for(int i = rows - 1; i >=0; i--)
-			    	   model.removeRow(i); 
-			    	
-			    	ArrayList<String> extensions = new ArrayList<String>(Arrays.asList(".jpg", ".jpeg", ".gif", ".png"));
-			    	ArrayList<String> filenames = new ArrayList<String>(); 
-			    	ArrayList<String> fotos = new ArrayList<String>(); 
-			    	ArrayList<File> files = new ArrayList<File>(Arrays.asList(pathFotos.listFiles()));
-			    	String extension = "";
-			    	Collections.sort(files);
-			    	for (File file : files) {
-			    		extension = file.getName().substring(file.getName().lastIndexOf("."), file.getName().length());
-			    		
-			    		System.out.println(extension);
-			    		
-			    		if(file.getName().indexOf("-ORIGINAL") == -1 && extensions.contains(extension.toLowerCase())) {
-				    		String[] filename = file.getName().replace(extension, "").split("-");
-				    		if(!filenames.contains((String) filename[0])) { 
-				    			filenames.add(filename[0]);
-				    			fotos.add(file.getName());
-				    		} else {
-			    				fotos.set(filenames.indexOf(filename[0]), fotos.get(filenames.indexOf(filename[0]))+","+file.getName());
-				    		}
-			    		}
-			    	}
-			    	for(int i=0; i<filenames.size(); i++)
-			    		model.addRow(new Object[]{filenames.get(i), "", categoria[categoria.length-1], "", 0.2, 1, "", String.valueOf(fotos.get(i))});
-			    	
-			    	lblStatus.setText(MessageFormat.format(messages.getString("status_total_products"), filenames.size()));
-			    	
-			    	btnRemover.setEnabled(false);
-					btnCategoria.setEnabled(false);
-					btnPreco.setEnabled(false);
-		    		btnPeso.setEnabled(false);
-		    		btnQuantidade.setEnabled(false);
-					panelFoto.setViewportView(null);
-			    	
+			    	listPhotos(chooserPasta.getSelectedFile());
 			    }
 			}
 		});
@@ -944,6 +874,8 @@ public class Main {
 				    
 				    writer.append(StringUtils.join(headers, ";")+'\n');
 				    
+				    String nowStr = String.format("%tF", date);
+				    
 				    // "Refer\u00EAncia", "Nome", "Categoria", "Pre\u00E7o", "Peso", "Quantidade", "Descri\u00E7\u00E3o", "Fotos"
 				    
 				    for (int i = 0; i < tableProdutos.getRowCount(); i++) {
@@ -966,6 +898,8 @@ public class Main {
 				    	urlrew = urlrew.toLowerCase().replaceAll(" ", "-");
 				    	row[headers.indexOf("URL rewritten")] = urlrew;
 				    	row[headers.indexOf("Available for order (0 = No, 1 = Yes)")] = config.cfgDisponivel;
+				    	row[headers.indexOf("Product available date")] = nowStr;
+				    	row[headers.indexOf("Product creation date")] = nowStr;
 				    	row[headers.indexOf("Show price (0 = No, 1 = Yes)")] = config.cfgExibePreco;
 				    	String[] images = ((String) tableProdutos.getValueAt(i, 7)).split(",");
 				    	for (int j = 0; j < images.length; j++) {
@@ -1073,6 +1007,131 @@ public class Main {
 		
 		scrollPane.setViewportView(tableProdutos);
 		
+		lblConfig = new JLabel();
+		lblConfig.setForeground(UIManager.getColor("Button.disabledText"));
+		lblConfig.setFont(new Font("Dialog", Font.BOLD, 10));
+		frmPstoolsV.getContentPane().add(lblConfig, "4, 16, 7, 1, left, bottom");
+		
+	}
+	private static void loadConfig(String pathConfig, Boolean warning) {
+		DocumentBuilderFactory dbFactory;
+		DocumentBuilder dBuilder;
+		Document doc;
+		diretorio = pathConfig;
+		lblConfig.setText(messages.getString("config_file")+diretorio+appConfigFile);
+		
+		try {
+			File xmlConfig = new File(diretorio+appConfigFile);
+			if(xmlConfig.exists()) {
+				dbFactory = DocumentBuilderFactory.newInstance();
+				dBuilder = dbFactory.newDocumentBuilder();
+				doc = dBuilder.parse(xmlConfig);
+			 
+				doc.getDocumentElement().normalize();
+			 
+				//System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+			 
+				//System.out.println("Name : " + doc.getElementsByTagName("name").item(0).getTextContent());
+				//System.out.println("Url : " + doc.getElementsByTagName("url").item(0).getTextContent());
+				//System.out.println("Path : " + doc.getElementsByTagName("path").item(0).getTextContent());
+				
+				textFieldNome.setText(doc.getElementsByTagName("name").item(0).getTextContent());
+				
+				textFieldUrl.setText(doc.getElementsByTagName("url").item(0).getTextContent());
+				
+				textFieldCaminho.setText(doc.getElementsByTagName("path").item(0).getTextContent());
+				
+				config.cfgAtivo = doc.getElementsByTagName("active").item(0).getTextContent();
+				config.cfgOferta = doc.getElementsByTagName("on_sale").item(0).getTextContent();
+				config.cfgDisponivel = doc.getElementsByTagName("available").item(0).getTextContent();
+				config.cfgExibePreco = doc.getElementsByTagName("show_price").item(0).getTextContent();
+				config.cfgDeleteImagens = doc.getElementsByTagName("delete_images").item(0).getTextContent();
+				config.cfgSomenteOnline = doc.getElementsByTagName("only_online").item(0).getTextContent();
+				
+				int rows = model.getRowCount(); 
+		    	for(int i = rows - 1; i >=0; i--)
+		    	   model.removeRow(i); 
+				
+				// "Refer\u00EAncia", "Nome", "Pre\u00E7o", "Peso", "Quantidade", "Descri\u00E7\u00E3o", "Fotos"
+				 
+				for (int i = 0; i < doc.getElementsByTagName("reference").getLength(); i++) {
+					
+					String reference = doc.getElementsByTagName("reference").item(i).getTextContent();
+					String name = doc.getElementsByTagName("name").item(i).getTextContent();
+					String category = doc.getElementsByTagName("category").item(i).getTextContent();
+					String price = doc.getElementsByTagName("price").item(i).getTextContent();
+					String weight = doc.getElementsByTagName("weight").item(i).getTextContent();
+					String quantity = doc.getElementsByTagName("quantity").item(i).getTextContent();
+					String description = doc.getElementsByTagName("description").item(i).getTextContent();
+					String photos = doc.getElementsByTagName("photos").item(i).getTextContent();
+					
+					/*System.out.println("Reference : " + reference);
+					System.out.println("Name : " + name);
+					System.out.println("Price : " + price);
+					System.out.println("Weight : " + weight);
+					System.out.println("Quantity : " + quantity);
+					System.out.println("Description : " + description);
+					System.out.println("Photos : " + photos);*/
+					
+					model.addRow(new Object[]{reference, name, category, price, weight, quantity, description, photos});
+				}
+				model.addTableModelListener(new TableModelListener() {
+					public void tableChanged (TableModelEvent e) {
+						saveWarning();
+					}
+				});
+				lblStatus.setText(MessageFormat.format(messages.getString("status_total_products"), doc.getElementsByTagName("reference").getLength()));
+			} else {
+				if(warning) {
+					JOptionPane.showMessageDialog(window.frmPstoolsV, messages.getString("config_load_warning"), messages.getString("config_load"), JOptionPane.INFORMATION_MESSAGE);
+					saveWarning();
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void listPhotos(File path) {
+    	textFieldCaminho.setText(path.getAbsolutePath());
+    	String[] categoria = path.getAbsolutePath().split("/");
+    	
+    	int rows = model.getRowCount(); 
+    	for(int i = rows - 1; i >=0; i--)
+    	   model.removeRow(i); 
+    	
+    	ArrayList<String> extensions = new ArrayList<String>(Arrays.asList(".jpg", ".jpeg", ".gif", ".png"));
+    	ArrayList<String> filenames = new ArrayList<String>(); 
+    	ArrayList<String> fotos = new ArrayList<String>(); 
+    	ArrayList<File> files = new ArrayList<File>(Arrays.asList(path.listFiles()));
+    	String extension = "";
+    	Collections.sort(files);
+    	for (File file : files) {
+    		extension = file.getName().substring(file.getName().lastIndexOf("."), file.getName().length());
+    		
+    		System.out.println(extension);
+    		
+    		if(file.getName().indexOf("-ORIGINAL") == -1 && extensions.contains(extension.toLowerCase())) {
+	    		String[] filename = file.getName().replace(extension, "").split("-");
+	    		if(!filenames.contains((String) filename[0])) { 
+	    			filenames.add(filename[0]);
+	    			fotos.add(file.getName());
+	    		} else {
+    				fotos.set(filenames.indexOf(filename[0]), fotos.get(filenames.indexOf(filename[0]))+","+file.getName());
+	    		}
+    		}
+    	}
+    	for(int i=0; i<filenames.size(); i++)
+    		model.addRow(new Object[]{filenames.get(i), "", categoria[categoria.length-1], "", 0.2, 1, "", String.valueOf(fotos.get(i))});
+    	
+    	lblStatus.setText(MessageFormat.format(messages.getString("status_total_products"), filenames.size()));
+    	
+    	btnRemover.setEnabled(false);
+		btnCategoria.setEnabled(false);
+		btnPreco.setEnabled(false);
+		btnPeso.setEnabled(false);
+		btnQuantidade.setEnabled(false);
+		panelFoto.setViewportView(null);
 	}
 	private void viewImage(int lastRow) {
 		try {
@@ -1162,22 +1221,12 @@ public class Main {
 	            dialogImage.pack();
 				dialogImage.setVisible(true);
 				dialogImage.addComponentListener(new ComponentListener() {
-					  public void componentHidden(ComponentEvent e)
-					  {
+					  public void componentHidden(ComponentEvent e) {
 						  frmPstoolsV.setEnabled(true);
 					  }
-					  public void componentMoved(ComponentEvent e)
-					  {
-						  System.out.println("dialog moved");
-					  }
-					  public void componentResized(ComponentEvent e)
-					  {
-						  System.out.println("dialog resized");
-					  }
-					  public void componentShown(ComponentEvent e)
-					  {
-						  System.out.println("dialog shown");
-					  }
+					  public void componentMoved(ComponentEvent e){}
+					  public void componentResized(ComponentEvent e){}
+					  public void componentShown(ComponentEvent e){}
 				});
 				frmPstoolsV.setEnabled(false);
 			}
@@ -1185,9 +1234,25 @@ public class Main {
 			e1.printStackTrace();
 		}
 	}
-	public void saveWarning() {
+	public static void saveWarning() {
 		btnSalvar.setIcon(save_alert);
 		btnSalvar.setToolTipText(messages.getString("button_save_alert"));
+	}
+	public static void setCheckBoxLocale(String lang) {
+		if(lang.equals("pt")) {
+			chckbxmntmPortugus.setSelected(true);
+			chckbxmntmIngls.setSelected(false);
+			chckbxmntmEspanhol.setSelected(false);
+		} else if(lang.equals("es")) {
+			chckbxmntmPortugus.setSelected(false);
+			chckbxmntmIngls.setSelected(false);
+			chckbxmntmEspanhol.setSelected(true);
+		} else {
+			chckbxmntmPortugus.setSelected(false);
+			chckbxmntmIngls.setSelected(true);
+			chckbxmntmEspanhol.setSelected(false);
+		}
+		setLocale(lang);
 	}
 	public static void setLocale(String lang) {
 		locale = new Locale(lang);
@@ -1200,13 +1265,17 @@ public class Main {
 		
 		window.frmPstoolsV.setTitle(appTitle+" "+appVersion+" - "+appDescription);
 		
+		lblConfig.setText(messages.getString("config_file")+diretorio+appConfigFile);
+		
 		mnArquivo.setText(messages.getString("menu_file"));
+		mntmLerconfiguraes.setText(messages.getString("config_load"));
 		mntmSair.setText(messages.getString("menuitem_exit"));
 		mntmGerarCdigos.setText(messages.getString("code_title"));
 		mnFerramentas.setText(messages.getString("menu_tools"));
 		mnIdioma.setText(messages.getString("menu_language"));
 		chckbxmntmPortugus.setText(messages.getString("menuitem_pt"));
 		chckbxmntmIngls.setText(messages.getString("menuitem_en"));
+		chckbxmntmEspanhol.setText(messages.getString("menuitem_es"));
 		mntmConfiguraes.setText(messages.getString("menuitem_config"));
 		mnAjuda.setText(messages.getString("menu_help"));
 		mntmContedo.setText(messages.getString("menuitem_content"));
