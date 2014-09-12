@@ -35,7 +35,6 @@ import java.awt.event.WindowListener;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
-import com.ibm.icu.impl.StringUCharacterIterator;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.ColumnSpec;
 import com.jgoodies.forms.factories.FormFactory;
@@ -170,7 +169,9 @@ public class Main {
 	private static JLabel lblStatus;
 	private Codes gerarCodigos;
 	private static JMenuItem mntmLerconfiguraes;
+	private static JMenuItem mntmSalvarConfiguracoes;
 	private static JLabel lblConfig;
+	private static JMenuBar menuBar;
 
 	/**
 	 * Launch the application.
@@ -222,7 +223,7 @@ public class Main {
 		
 		frmPstoolsV = new JFrame();
 		frmPstoolsV.setPreferredSize(new Dimension(1280, 768));
-		frmPstoolsV.setIconImage(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/pstools-icon256.png")));
+		frmPstoolsV.setIconImage(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/pstools-icon_256.png")));
 		frmPstoolsV.getContentPane().setFont(new Font("Verdana", Font.PLAIN, 14));
 		frmPstoolsV.setFont(new Font("Verdana", Font.PLAIN, 16));
 		frmPstoolsV.setTitle(appTitle+" "+appVersion+" - "+appDescription);
@@ -231,7 +232,7 @@ public class Main {
 		frmPstoolsV.setBounds(100, 100, 450, 300);
 		frmPstoolsV.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		JMenuBar menuBar = new JMenuBar();
+		menuBar = new JMenuBar();
 		menuBar.setPreferredSize(new Dimension(0, 32));
 		frmPstoolsV.setJMenuBar(menuBar);
 		
@@ -239,27 +240,32 @@ public class Main {
 		mnArquivo.setFont(new Font("Verdana", Font.BOLD, 14));
 		menuBar.add(mnArquivo);
 		
-		mntmSair = new JMenuItem();
-		mntmSair.setIcon(new ImageIcon(Main.class.getResource("/assets/exit.png")));
-		mntmSair.setFont(new Font("Verdana", Font.BOLD, 14));
-		mntmSair.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				frmPstoolsV.setVisible(false);
-				System.exit(0);
-			}
-		});
-		
 		config = new Config(messages);
 		config.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentHidden(ComponentEvent arg0) {
+				frmPstoolsV.toFront();
 				frmPstoolsV.setEnabled(true);
 				if(config.isSave)
 					saveWarning();
 			}
 		});
 		
+		mntmSalvarConfiguracoes = new JMenuItem();
+		mntmSalvarConfiguracoes.setFont(new Font("Verdana", Font.BOLD, 14));
+		mntmSalvarConfiguracoes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+		mntmSalvarConfiguracoes.setIcon(new ImageIcon(Main.class.getResource("/assets/config_save.png")));
+		mntmSalvarConfiguracoes.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				saveConfig();
+			}
+		});
+		mnArquivo.add(mntmSalvarConfiguracoes);
+		
 		mntmLerconfiguraes = new JMenuItem();
+		mntmLerconfiguraes.setFont(new Font("Verdana", Font.BOLD, 14));
+		mntmLerconfiguraes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK));
+		mntmLerconfiguraes.setIcon(new ImageIcon(Main.class.getResource("/assets/config_load.png")));
 		mntmLerconfiguraes.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				chooserPasta = new JFileChooser(); 
@@ -272,9 +278,17 @@ public class Main {
 			    }
 			}
 		});
-		mntmLerconfiguraes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK));
-		mntmLerconfiguraes.setIcon(new ImageIcon(Main.class.getResource("/assets/config_load.png")));
 		mnArquivo.add(mntmLerconfiguraes);
+		
+		mntmSair = new JMenuItem();
+		mntmSair.setIcon(new ImageIcon(Main.class.getResource("/assets/exit.png")));
+		mntmSair.setFont(new Font("Verdana", Font.BOLD, 14));
+		mntmSair.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				frmPstoolsV.setVisible(false);
+				System.exit(0);
+			}
+		});
 		mntmSair.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK));
 		mnArquivo.add(mntmSair);
 		
@@ -656,145 +670,7 @@ public class Main {
 		btnSalvar.setIcon(save_ok);
 		btnSalvar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				try {
-					
-					TransformerFactory transformerFactory;
-					Transformer transformer;
-					DOMSource source;
-					StreamResult result;
-					
-					DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-					DocumentBuilder docBuilder;
-					
-					docBuilder = docFactory.newDocumentBuilder();
-					
-					// root elements
-					Document doc = docBuilder.newDocument();
-					Element rootElement = doc.createElement("pstools");
-					doc.appendChild(rootElement);
-					
-					// config element
-					Element configElement = doc.createElement("config");
-			 
-					// name element
-					Element name = doc.createElement("name");
-					name.appendChild(doc.createTextNode(textFieldNome.getText()));
-					configElement.appendChild(name);
-					
-					// url element
-					Element url = doc.createElement("url");
-					url.appendChild(doc.createTextNode(textFieldUrl.getText()));
-					configElement.appendChild(url);
-					
-					// path element
-					Element path = doc.createElement("path");
-					path.appendChild(doc.createTextNode(textFieldCaminho.getText()));
-					configElement.appendChild(path);
-					
-					// active element
-					Element active = doc.createElement("active");
-					active.appendChild(doc.createTextNode(config.cfgAtivo));
-					configElement.appendChild(active);
-
-					// on_sale element
-					Element on_sale = doc.createElement("on_sale");
-					on_sale.appendChild(doc.createTextNode(config.cfgOferta));
-					configElement.appendChild(on_sale);
-					
-					// available element
-					Element available = doc.createElement("available");
-					available.appendChild(doc.createTextNode(config.cfgDisponivel));
-					configElement.appendChild(available);
-					
-					// show_price element
-					Element show_price = doc.createElement("show_price");
-					show_price.appendChild(doc.createTextNode(config.cfgExibePreco));
-					configElement.appendChild(show_price);
-					
-					// delete_images element
-					Element delete_images = doc.createElement("delete_images");
-					delete_images.appendChild(doc.createTextNode(config.cfgDeleteImagens));
-					configElement.appendChild(delete_images);
-					
-					// only_online element
-					Element only_online = doc.createElement("only_online");
-					only_online.appendChild(doc.createTextNode(config.cfgSomenteOnline));
-					configElement.appendChild(only_online);
-					
-					rootElement.appendChild(configElement);
-					
-					Element dataElement = doc.createElement("data");
-					
-					Element rowElement;
-					
-					for (int i = 0; i < tableProdutos.getRowCount(); i++) {
-						rowElement = doc.createElement("row");
-						dataElement.appendChild(rowElement);
-						
-						// "Refer\u00EAncia", "Nome", "Categoria", "Pre\u00E7o", "Peso", "Quantidade", "Descri\u00E7\u00E3o", "Fotos"
-						
-						// reference element
-						Element reference = doc.createElement("reference");
-						reference.appendChild(doc.createTextNode((String) tableProdutos.getValueAt(i, 0)));
-						rowElement.appendChild(reference);
-						
-						// name element
-						Element named = doc.createElement("name");
-						named.appendChild(doc.createTextNode((String) tableProdutos.getValueAt(i, 1)));
-						rowElement.appendChild(named);
-						
-						// category element
-						Element category = doc.createElement("category");
-						category.appendChild(doc.createTextNode((String) tableProdutos.getValueAt(i, 2)));
-						rowElement.appendChild(category);
-						
-						// price element
-						Element price = doc.createElement("price");
-						price.appendChild(doc.createTextNode((String) tableProdutos.getValueAt(i, 3)));
-						rowElement.appendChild(price);
-						
-						// weight element
-						Element weight = doc.createElement("weight");
-						weight.appendChild(doc.createTextNode(String.valueOf(tableProdutos.getValueAt(i, 4))));
-						rowElement.appendChild(weight);
-						
-						// quantity element
-						Element quantity = doc.createElement("quantity");
-						quantity.appendChild(doc.createTextNode(String.valueOf(tableProdutos.getValueAt(i, 5))));
-						rowElement.appendChild(quantity);
-						
-						// description element
-						Element description = doc.createElement("description");
-						description.appendChild(doc.createTextNode((String) tableProdutos.getValueAt(i, 6)));
-						rowElement.appendChild(description);
-						
-						// photos element
-						Element photos = doc.createElement("photos");
-						photos.appendChild(doc.createTextNode(String.valueOf(tableProdutos.getValueAt(i, 7))));
-						rowElement.appendChild(photos);
-					}
-					
-					rootElement.appendChild(dataElement);
-			 
-					transformerFactory = TransformerFactory.newInstance();
-					transformer = transformerFactory.newTransformer();
-					source = new DOMSource(doc);
-					result = new StreamResult(new File(diretorio+appConfigFile));
-			 
-					// Output to console for testing
-					// StreamResult result = new StreamResult(System.out);
-					transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-					transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");
-					transformer.transform(source, result);
-					
-					JOptionPane.showMessageDialog(frmPstoolsV, messages.getString("dialog_save"), messages.getString("dialog_save_title"), JOptionPane.INFORMATION_MESSAGE);
-					
-					btnSalvar.setIcon(save_ok);
-					btnSalvar.setToolTipText(messages.getString("button_save_ok"));
-					
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				saveConfig();
 			}
 		});
 		
@@ -804,38 +680,7 @@ public class Main {
 		btnRemover.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
-				rowsSelected = tableProdutos.getSelectedRows();
-				if(rowsSelected.length > 0) {
-					String codProduto = "";
-					for (int i : rowsSelected) {
-						codProduto += ((String) tableProdutos.getValueAt(i, 0))+" ";
-					}
-					int confirm = JOptionPane.showConfirmDialog(frmPstoolsV, MessageFormat.format(messages.getString("confirm_delete"), codProduto), messages.getString("confirm_delete_title"), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-					if(confirm == JOptionPane.YES_OPTION) {
-						String[] termFoto;
-						File fileFoto;
-						
-						int delete = JOptionPane.showConfirmDialog(frmPstoolsV, messages.getString("confirm_delete_images"), messages.getString("confirm_delete_title"), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-						for (int j = rowsSelected.length-1; j >= 0; j--) {
-							model.removeRow(rowsSelected[j]);
-							if(delete == JOptionPane.YES_OPTION) {
-								termFoto = ((String) tableProdutos.getValueAt(rowsSelected[j], 7)).split(",");
-								for (int k = 0; k < termFoto.length; k++) {
-						            fileFoto = new File(textFieldCaminho.getText()+"/"+termFoto[k]);
-						            System.out.println(fileFoto.getAbsolutePath());
-						            if(fileFoto.exists())
-						            	fileFoto.delete();
-								}
-							}
-						}
-						btnRemover.setEnabled(false);
-						btnCategoria.setEnabled(false);
-						btnPreco.setEnabled(false);
-			    		btnPeso.setEnabled(false);
-			    		btnQuantidade.setEnabled(false);
-						panelFoto.setViewportView(null);
-					}
-				}
+				deleteImage();
 			}
 		});
 		
@@ -851,10 +696,10 @@ public class Main {
 				try
 				{
 					SimpleDateFormat dateFormat = null;
-					if(locale.getLanguage().equals("pt"))
-						dateFormat = new SimpleDateFormat("dd-MM-yyyy");
-					else if(locale.getLanguage().equals("en"))
-						dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+					if(locale.getLanguage().equals("en"))
+						dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
+					else
+						dateFormat = new SimpleDateFormat("dd-MM-yyyy HH-mm-ss");
 					
 					Date date = new Date();
 					String filename = diretorio+"prestashop_"+dateFormat.format(date)+".csv";
@@ -903,7 +748,7 @@ public class Main {
 				    	row[headers.indexOf("Show price (0 = No, 1 = Yes)")] = config.cfgExibePreco;
 				    	String[] images = ((String) tableProdutos.getValueAt(i, 7)).split(",");
 				    	for (int j = 0; j < images.length; j++) {
-				    		images[j] = textFieldUrl.getText()+"img/tmp/"+images[j];
+				    		images[j] = textFieldUrl.getText()+"/img/tmp/"+images[j];
 						}
 				    	row[headers.indexOf("Image URLs (x,y,z...)")] = StringUtils.join(images, ",");
 				    	row[headers.indexOf("Delete existing images (0 = No, 1 = Yes)")] = config.cfgDeleteImagens;
@@ -941,6 +786,10 @@ public class Main {
 			@Override
 			public void keyReleased(KeyEvent arg0) {
 				viewImage(tableProdutos.getSelectedRow());
+				System.out.println("Key :" + arg0.getKeyCode());
+				if(arg0.getKeyCode() == 127){
+					deleteImage();
+				}
 			}
 		});
 		tableProdutos.addMouseListener(new MouseAdapter() {
@@ -1035,7 +884,7 @@ public class Main {
 				//System.out.println("Url : " + doc.getElementsByTagName("url").item(0).getTextContent());
 				//System.out.println("Path : " + doc.getElementsByTagName("path").item(0).getTextContent());
 				
-				textFieldNome.setText(doc.getElementsByTagName("name").item(0).getTextContent());
+				textFieldNome.setText(doc.getElementsByTagName("site").item(0).getTextContent());
 				
 				textFieldUrl.setText(doc.getElementsByTagName("url").item(0).getTextContent());
 				
@@ -1053,7 +902,7 @@ public class Main {
 		    	   model.removeRow(i); 
 				
 				// "Refer\u00EAncia", "Nome", "Pre\u00E7o", "Peso", "Quantidade", "Descri\u00E7\u00E3o", "Fotos"
-				 
+		    	
 				for (int i = 0; i < doc.getElementsByTagName("reference").getLength(); i++) {
 					
 					String reference = doc.getElementsByTagName("reference").item(i).getTextContent();
@@ -1071,7 +920,7 @@ public class Main {
 					System.out.println("Weight : " + weight);
 					System.out.println("Quantity : " + quantity);
 					System.out.println("Description : " + description);
-					System.out.println("Photos : " + photos);*/
+					System.out.println("Photos : " + photos + "\n");*/
 					
 					model.addRow(new Object[]{reference, name, category, price, weight, quantity, description, photos});
 				}
@@ -1092,9 +941,151 @@ public class Main {
 		}
 	}
 	
+	private void saveConfig(){
+		try {
+			
+			TransformerFactory transformerFactory;
+			Transformer transformer;
+			DOMSource source;
+			StreamResult result;
+			
+			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder docBuilder;
+			
+			docBuilder = docFactory.newDocumentBuilder();
+			
+			// root elements
+			Document doc = docBuilder.newDocument();
+			Element rootElement = doc.createElement("pstools");
+			doc.appendChild(rootElement);
+			
+			// config element
+			Element configElement = doc.createElement("config");
+	 
+			// name element
+			Element name = doc.createElement("site");
+			name.appendChild(doc.createTextNode(textFieldNome.getText()));
+			configElement.appendChild(name);
+			
+			// url element
+			Element url = doc.createElement("url");
+			url.appendChild(doc.createTextNode(textFieldUrl.getText()));
+			configElement.appendChild(url);
+			
+			// path element
+			Element path = doc.createElement("path");
+			path.appendChild(doc.createTextNode(textFieldCaminho.getText()));
+			configElement.appendChild(path);
+			
+			// active element
+			Element active = doc.createElement("active");
+			active.appendChild(doc.createTextNode(config.cfgAtivo));
+			configElement.appendChild(active);
+
+			// on_sale element
+			Element on_sale = doc.createElement("on_sale");
+			on_sale.appendChild(doc.createTextNode(config.cfgOferta));
+			configElement.appendChild(on_sale);
+			
+			// available element
+			Element available = doc.createElement("available");
+			available.appendChild(doc.createTextNode(config.cfgDisponivel));
+			configElement.appendChild(available);
+			
+			// show_price element
+			Element show_price = doc.createElement("show_price");
+			show_price.appendChild(doc.createTextNode(config.cfgExibePreco));
+			configElement.appendChild(show_price);
+			
+			// delete_images element
+			Element delete_images = doc.createElement("delete_images");
+			delete_images.appendChild(doc.createTextNode(config.cfgDeleteImagens));
+			configElement.appendChild(delete_images);
+			
+			// only_online element
+			Element only_online = doc.createElement("only_online");
+			only_online.appendChild(doc.createTextNode(config.cfgSomenteOnline));
+			configElement.appendChild(only_online);
+			
+			rootElement.appendChild(configElement);
+			
+			Element dataElement = doc.createElement("data");
+			
+			Element rowElement;
+			
+			for (int i = 0; i < tableProdutos.getRowCount(); i++) {
+				rowElement = doc.createElement("row");
+				dataElement.appendChild(rowElement);
+				
+				// "Refer\u00EAncia", "Nome", "Categoria", "Pre\u00E7o", "Peso", "Quantidade", "Descri\u00E7\u00E3o", "Fotos"
+				
+				// reference element
+				Element reference = doc.createElement("reference");
+				reference.appendChild(doc.createTextNode((String) tableProdutos.getValueAt(i, 0)));
+				rowElement.appendChild(reference);
+				
+				// name element
+				Element named = doc.createElement("name");
+				named.appendChild(doc.createTextNode((String) tableProdutos.getValueAt(i, 1)));
+				rowElement.appendChild(named);
+				
+				// category element
+				Element category = doc.createElement("category");
+				category.appendChild(doc.createTextNode((String) tableProdutos.getValueAt(i, 2)));
+				rowElement.appendChild(category);
+				
+				// price element
+				Element price = doc.createElement("price");
+				price.appendChild(doc.createTextNode((String) tableProdutos.getValueAt(i, 3)));
+				rowElement.appendChild(price);
+				
+				// weight element
+				Element weight = doc.createElement("weight");
+				weight.appendChild(doc.createTextNode(String.valueOf(tableProdutos.getValueAt(i, 4))));
+				rowElement.appendChild(weight);
+				
+				// quantity element
+				Element quantity = doc.createElement("quantity");
+				quantity.appendChild(doc.createTextNode(String.valueOf(tableProdutos.getValueAt(i, 5))));
+				rowElement.appendChild(quantity);
+				
+				// description element
+				Element description = doc.createElement("description");
+				description.appendChild(doc.createTextNode((String) tableProdutos.getValueAt(i, 6)));
+				rowElement.appendChild(description);
+				
+				// photos element
+				Element photos = doc.createElement("photos");
+				photos.appendChild(doc.createTextNode(String.valueOf(tableProdutos.getValueAt(i, 7))));
+				rowElement.appendChild(photos);
+			}
+			
+			rootElement.appendChild(dataElement);
+	 
+			transformerFactory = TransformerFactory.newInstance();
+			transformer = transformerFactory.newTransformer();
+			source = new DOMSource(doc);
+			result = new StreamResult(new File(diretorio+appConfigFile));
+	 
+			// Output to console for testing
+			// StreamResult result = new StreamResult(System.out);
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");
+			transformer.transform(source, result);
+			
+			JOptionPane.showMessageDialog(frmPstoolsV, messages.getString("dialog_save"), messages.getString("dialog_save_title"), JOptionPane.INFORMATION_MESSAGE);
+			
+			btnSalvar.setIcon(save_ok);
+			btnSalvar.setToolTipText(messages.getString("button_save_ok"));
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private void listPhotos(File path) {
     	textFieldCaminho.setText(path.getAbsolutePath());
-    	String[] categoria = path.getAbsolutePath().split("/");
+    	String[] categoria = path.getAbsolutePath().contains("/") ? path.getAbsolutePath().split("/") : path.getAbsolutePath().split("\\\\");
     	
     	int rows = model.getRowCount(); 
     	for(int i = rows - 1; i >=0; i--)
@@ -1109,7 +1100,7 @@ public class Main {
     	for (File file : files) {
     		extension = file.getName().substring(file.getName().lastIndexOf("."), file.getName().length());
     		
-    		System.out.println(extension);
+    		//System.out.println(extension);
     		
     		if(file.getName().indexOf("-ORIGINAL") == -1 && extensions.contains(extension.toLowerCase())) {
 	    		String[] filename = file.getName().replace(extension, "").split("-");
@@ -1132,6 +1123,41 @@ public class Main {
 		btnPeso.setEnabled(false);
 		btnQuantidade.setEnabled(false);
 		panelFoto.setViewportView(null);
+	}
+	private void deleteImage() {
+		rowsSelected = tableProdutos.getSelectedRows();
+		if(rowsSelected.length > 0) {
+			String codProduto = "";
+			for (int i : rowsSelected) {
+				codProduto += ((String) tableProdutos.getValueAt(i, 0))+" ";
+			}
+			int confirm = JOptionPane.showConfirmDialog(frmPstoolsV, MessageFormat.format(messages.getString("confirm_delete"), codProduto), messages.getString("confirm_delete_title"), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+			if(confirm == JOptionPane.YES_OPTION) {
+				String[] termFoto;
+				File fileFoto;
+				
+				int delete = JOptionPane.showConfirmDialog(frmPstoolsV, messages.getString("confirm_delete_images"), messages.getString("confirm_delete_title"), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+				for (int j = rowsSelected.length-1; j >= 0; j--) {
+					model.removeRow(rowsSelected[j]);
+					if(delete == JOptionPane.YES_OPTION) {
+						termFoto = ((String) tableProdutos.getValueAt(rowsSelected[j], 7)).split(",");
+						for (int k = 0; k < termFoto.length; k++) {
+				            fileFoto = new File(textFieldCaminho.getText()+"/"+termFoto[k]);
+				            System.out.println(fileFoto.getAbsolutePath());
+				            if(fileFoto.exists())
+				            	fileFoto.delete();
+						}
+					}
+				}
+				lblStatus.setText(MessageFormat.format(messages.getString("status_total_products"), model.getRowCount()));
+				btnRemover.setEnabled(false);
+				btnCategoria.setEnabled(false);
+				btnPreco.setEnabled(false);
+	    		btnPeso.setEnabled(false);
+	    		btnQuantidade.setEnabled(false);
+				panelFoto.setViewportView(null);
+			}
+		}
 	}
 	private void viewImage(int lastRow) {
 		try {
@@ -1199,7 +1225,9 @@ public class Main {
 	            ImageIcon iconFoto;
 	            
 	            dialogImage = new JDialog(frmPstoolsV);
-	            dialogImage.getContentPane().setLayout(new FlowLayout());
+	            JPanel jpanelFundo = new JPanel();
+	            
+	            int wid=0, hei=0;
 	            
 	            for (int i = 0; i < termFoto.length; i++) {
 	            	
@@ -1213,15 +1241,23 @@ public class Main {
 			            
 						JLabel labelFoto = new JLabel("", iconFoto, JLabel.CENTER);
 						
-						dialogImage.getContentPane().add( labelFoto );
+						wid += iconFoto.getIconWidth();
+						hei += iconFoto.getIconHeight();
+						
+						jpanelFundo.add( labelFoto);
+						
 						
 						//System.out.println(fileFoto.getAbsolutePath());
 		            }
 				}
-	            dialogImage.pack();
+	            jpanelFundo.setSize(wid, hei);
+	            dialogImage.getContentPane().add(new JScrollPane(jpanelFundo));  
+	            dialogImage.setSize(800, 600);  
+	            dialogImage.setLocation(0, 0);  
 				dialogImage.setVisible(true);
 				dialogImage.addComponentListener(new ComponentListener() {
 					  public void componentHidden(ComponentEvent e) {
+						  frmPstoolsV.toFront();
 						  frmPstoolsV.setEnabled(true);
 					  }
 					  public void componentMoved(ComponentEvent e){}
@@ -1268,6 +1304,7 @@ public class Main {
 		lblConfig.setText(messages.getString("config_file")+diretorio+appConfigFile);
 		
 		mnArquivo.setText(messages.getString("menu_file"));
+		mntmSalvarConfiguracoes.setText(messages.getString("config_save"));
 		mntmLerconfiguraes.setText(messages.getString("config_load"));
 		mntmSair.setText(messages.getString("menuitem_exit"));
 		mntmGerarCdigos.setText(messages.getString("code_title"));
