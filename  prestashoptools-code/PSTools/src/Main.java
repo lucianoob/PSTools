@@ -4,6 +4,7 @@ import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 
+import javax.security.auth.callback.TextOutputCallback;
 import javax.swing.JFrame;
 
 import java.awt.Dimension;
@@ -172,6 +173,11 @@ public class Main {
 	private static JMenuItem mntmSalvarConfiguracoes;
 	private static JLabel lblConfig;
 	private static JMenuBar menuBar;
+	private static JButton btnAcima;
+	private static JButton btnAbaixo;
+	private String textToCopy;
+	private int linhaSelecionada;
+	private int colunaSelecionada;
 
 	/**
 	 * Launch the application.
@@ -220,6 +226,8 @@ public class Main {
 	 */
 	@SuppressWarnings({ "serial", "rawtypes", "unchecked" })
 	private void initialize() {
+		
+		textToCopy = "";
 		
 		frmPstoolsV = new JFrame();
 		frmPstoolsV.setPreferredSize(new Dimension(1280, 768));
@@ -478,7 +486,9 @@ public class Main {
 		mnAjuda.add(mntmSobre);
 		frmPstoolsV.getContentPane().setLayout(new FormLayout(new ColumnSpec[] {
 				FormFactory.RELATED_GAP_COLSPEC,
-				ColumnSpec.decode("78px"),
+				ColumnSpec.decode("max(33dlu;default)"),
+				FormFactory.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("39px"),
 				FormFactory.RELATED_GAP_COLSPEC,
 				ColumnSpec.decode("max(47dlu;default)"),
 				FormFactory.RELATED_GAP_COLSPEC,
@@ -506,6 +516,10 @@ public class Main {
 				FormFactory.RELATED_GAP_ROWSPEC,
 				RowSpec.decode("300px:grow"),
 				FormFactory.RELATED_GAP_ROWSPEC,
+				FormFactory.DEFAULT_ROWSPEC,
+				FormFactory.RELATED_GAP_ROWSPEC,
+				FormFactory.DEFAULT_ROWSPEC,
+				FormFactory.RELATED_GAP_ROWSPEC,
 				RowSpec.decode("34px"),
 				FormFactory.RELATED_GAP_ROWSPEC,
 				FormFactory.DEFAULT_ROWSPEC,
@@ -514,33 +528,33 @@ public class Main {
 		lblNome = new JLabel();
 		lblNome.setHorizontalAlignment(SwingConstants.RIGHT);
 		lblNome.setFont(new Font("Verdana", Font.BOLD, 14));
-		frmPstoolsV.getContentPane().add(lblNome, "2, 2, fill, center");
+		frmPstoolsV.getContentPane().add(lblNome, "2, 2, 3, 1, fill, center");
 		
 		textFieldNome = new JTextField();
 		textFieldNome.setFont(new Font("Verdana", Font.PLAIN, 14));
-		frmPstoolsV.getContentPane().add(textFieldNome, "4, 2, 9, 1, left, fill");
+		frmPstoolsV.getContentPane().add(textFieldNome, "6, 2, 9, 1, left, fill");
 		textFieldNome.setColumns(30);
 		
 		lblUrl = new JLabel();
 		lblUrl.setHorizontalAlignment(SwingConstants.RIGHT);
 		lblUrl.setFont(new Font("Verdana", Font.BOLD, 14));
-		frmPstoolsV.getContentPane().add(lblUrl, "2, 4, right, center");
+		frmPstoolsV.getContentPane().add(lblUrl, "2, 4, 3, 1, right, center");
 		
 		textFieldUrl = new JTextField();
 		textFieldUrl.setFont(new Font("Verdana", Font.PLAIN, 14));
-		frmPstoolsV.getContentPane().add(textFieldUrl, "4, 4, 9, 1, fill, fill");
+		frmPstoolsV.getContentPane().add(textFieldUrl, "6, 4, 9, 1, fill, fill");
 		textFieldUrl.setColumns(80);
 		
 		lblCaminho = new JLabel();
 		lblCaminho.setHorizontalAlignment(SwingConstants.RIGHT);
 		lblCaminho.setFont(new Font("Verdana", Font.BOLD, 14));
-		frmPstoolsV.getContentPane().add(lblCaminho, "2, 6, right, default");
+		frmPstoolsV.getContentPane().add(lblCaminho, "2, 6, 3, 1, right, default");
 		
 		textFieldCaminho = new JTextField();
 		textFieldCaminho.setDisabledTextColor(Color.BLACK);
 		textFieldCaminho.setEditable(false);
 		textFieldCaminho.setFont(new Font("Verdana", Font.PLAIN, 14));
-		frmPstoolsV.getContentPane().add(textFieldCaminho, "4, 6, 7, 1, fill, fill");
+		frmPstoolsV.getContentPane().add(textFieldCaminho, "6, 6, 7, 1, fill, fill");
 		textFieldCaminho.setColumns(80);
 		
 		panelFoto = new JScrollPane();
@@ -555,7 +569,7 @@ public class Main {
 		panelFoto.setBorder(new LineBorder(new Color(0, 0, 0)));
 		panelFoto.setBackground(Color.WHITE);
 		panelFoto.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-		frmPstoolsV.getContentPane().add(panelFoto, "14, 2, 1, 5, fill, fill");
+		frmPstoolsV.getContentPane().add(panelFoto, "16, 2, 1, 5, fill, fill");
 		
 		btnSelecionarPasta = new JButton();
 		btnSelecionarPasta.setIcon(select_folder);
@@ -573,10 +587,10 @@ public class Main {
 		});
 		
 		btnSelecionarPasta.setFont(new Font("Verdana", Font.BOLD, 14));
-		frmPstoolsV.getContentPane().add(btnSelecionarPasta, "12, 6, left, fill");
+		frmPstoolsV.getContentPane().add(btnSelecionarPasta, "14, 6, left, fill");
 		
 		separator = new JSeparator();
-		frmPstoolsV.getContentPane().add(separator, "2, 8, 13, 1");
+		frmPstoolsV.getContentPane().add(separator, "2, 8, 15, 1");
 		
 		btnCategoria = new JButton();
 		btnCategoria.setFont(new Font("Dialog", Font.BOLD, 14));
@@ -598,7 +612,7 @@ public class Main {
 				}
 			}
 		});
-		frmPstoolsV.getContentPane().add(btnCategoria, "4, 10, left, default");
+		frmPstoolsV.getContentPane().add(btnCategoria, "6, 10, left, default");
 		
 		btnPreco = new JButton();
 		btnPreco.setFont(new Font("Dialog", Font.BOLD, 14));
@@ -620,7 +634,7 @@ public class Main {
 			}
 		});
 		btnPreco.setEnabled(false);
-		frmPstoolsV.getContentPane().add(btnPreco, "6, 10, left, default");
+		frmPstoolsV.getContentPane().add(btnPreco, "8, 10, left, default");
 		
 		btnPeso = new JButton();
 		btnPeso.setFont(new Font("Dialog", Font.BOLD, 14));
@@ -642,7 +656,7 @@ public class Main {
 			}
 		});
 		btnPeso.setEnabled(false);
-		frmPstoolsV.getContentPane().add(btnPeso, "8, 10, left, default");
+		frmPstoolsV.getContentPane().add(btnPeso, "10, 10, left, default");
 		
 		btnQuantidade = new JButton();
 		btnQuantidade.setFont(new Font("Dialog", Font.BOLD, 14));
@@ -664,7 +678,7 @@ public class Main {
 			}
 		});
 		btnQuantidade.setEnabled(false);
-		frmPstoolsV.getContentPane().add(btnQuantidade, "10, 10, left, default");
+		frmPstoolsV.getContentPane().add(btnQuantidade, "12, 10, left, default");
 		
 		btnSalvar = new JButton();
 		btnSalvar.setIcon(save_ok);
@@ -685,9 +699,34 @@ public class Main {
 		});
 		
 		btnRemover.setEnabled(false);
-		frmPstoolsV.getContentPane().add(btnRemover, "14, 10, right, default");
+		frmPstoolsV.getContentPane().add(btnRemover, "16, 10, right, default");
+		
+		btnAcima = new JButton("");
+		btnAcima.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(textToCopy != "" && linhaSelecionada > 0) {
+					tableProdutos.setValueAt(textToCopy, linhaSelecionada-1, colunaSelecionada);
+				}
+			}
+		});
+		btnAcima.setEnabled(false);
+		btnAcima.setIcon(new ImageIcon(Main.class.getResource("/assets/copy_up.png")));
+		btnAcima.setFont(new Font("Dialog", Font.PLAIN, 13));
+		frmPstoolsV.getContentPane().add(btnAcima, "4, 14");
+		
+		btnAbaixo = new JButton("");
+		btnAbaixo.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(textToCopy != "" && linhaSelecionada < tableProdutos.getRowCount()-1) {
+					tableProdutos.setValueAt(textToCopy, linhaSelecionada+1, colunaSelecionada);
+				}
+			}
+		});
+		btnAbaixo.setEnabled(false);
+		btnAbaixo.setIcon(new ImageIcon(Main.class.getResource("/assets/copy_down.png")));
+		frmPstoolsV.getContentPane().add(btnAbaixo, "4, 16");
 		btnSalvar.setFont(new Font("Verdana", Font.BOLD, 14));
-		frmPstoolsV.getContentPane().add(btnSalvar, "4, 14, 2, 1, left, default");
+		frmPstoolsV.getContentPane().add(btnSalvar, "6, 18, 2, 1, left, default");
 		
 		btnExportar = new JButton();
 		btnExportar.setIcon(export);
@@ -773,20 +812,20 @@ public class Main {
 		});
 		
 		lblStatus = new JLabel("");
-		frmPstoolsV.getContentPane().add(lblStatus, "6, 14, 7, 1");
+		frmPstoolsV.getContentPane().add(lblStatus, "8, 18, 7, 1");
 		btnExportar.setFont(new Font("Verdana", Font.BOLD, 14));
-		frmPstoolsV.getContentPane().add(btnExportar, "14, 14, right, default");
+		frmPstoolsV.getContentPane().add(btnExportar, "16, 18, right, default");
 		
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setFont(new Font("Dialog", Font.PLAIN, 14));
-		frmPstoolsV.getContentPane().add(scrollPane, "4, 12, 11, 1, fill, fill");
+		frmPstoolsV.getContentPane().add(scrollPane, "6, 12, 11, 5, fill, fill");
 		
 		tableProdutos = new JTable();
 		tableProdutos.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyReleased(KeyEvent arg0) {
 				viewImage(tableProdutos.getSelectedRow());
-				System.out.println("Key :" + arg0.getKeyCode());
+				//System.out.println("Key :" + arg0.getKeyCode());
 				if(arg0.getKeyCode() == 127){
 					deleteImage();
 				}
@@ -794,7 +833,24 @@ public class Main {
 		});
 		tableProdutos.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
-	            viewImage(tableProdutos.rowAtPoint(e.getPoint()));
+				linhaSelecionada = tableProdutos.rowAtPoint(e.getPoint());
+				colunaSelecionada = tableProdutos.columnAtPoint(e.getPoint());
+	            viewImage(linhaSelecionada);
+	            if(linhaSelecionada != -1) {
+		        	textToCopy = ((String)tableProdutos.getValueAt(linhaSelecionada, colunaSelecionada));
+		        	System.out.println("Text: " + textToCopy + " Row: " + linhaSelecionada + " Column: " + colunaSelecionada);
+		        	if(textToCopy != "") {
+		        		btnAcima.setEnabled(true);
+		        		btnAbaixo.setEnabled(true);
+		        	} else {
+		        		btnAcima.setEnabled(false);
+		        		btnAbaixo.setEnabled(false);
+		        	}
+	            } else {
+	            	textToCopy = "";
+	            	btnAcima.setEnabled(false);
+	        		btnAbaixo.setEnabled(false);
+	            }
 			}
 		});
 		
@@ -859,7 +915,7 @@ public class Main {
 		lblConfig = new JLabel();
 		lblConfig.setForeground(UIManager.getColor("Button.disabledText"));
 		lblConfig.setFont(new Font("Dialog", Font.BOLD, 10));
-		frmPstoolsV.getContentPane().add(lblConfig, "4, 16, 7, 1, left, bottom");
+		frmPstoolsV.getContentPane().add(lblConfig, "6, 20, 7, 1, left, bottom");
 		
 	}
 	private static void loadConfig(String pathConfig, Boolean warning) {
@@ -1341,6 +1397,8 @@ public class Main {
 		btnRemover.setText(messages.getString("button_delete"));
 		btnSalvar.setText(messages.getString("button_save"));
 		btnExportar.setText(messages.getString("button_export"));
+		btnAcima.setToolTipText(messages.getString("copy_up_tooltip"));
+		btnAbaixo.setToolTipText(messages.getString("copy_down_tooltip"));
 		
 		if(btnSalvar.getIcon().equals(save_ok))
 			btnSalvar.setToolTipText(messages.getString("button_save_ok"));
