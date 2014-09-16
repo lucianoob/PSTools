@@ -128,7 +128,7 @@ public class Main {
 	private static ResourceBundle messages;
 	private static Locale locale;
 	private static String appTitle;
-	private static String appVersion = "v2.68";
+	private static String appVersion = "v2.69";
 	private static String appDescription;
 	private static String appDeveloper;
 	private static String appConfigFile = "pstools.cfg";
@@ -204,7 +204,7 @@ public class Main {
 					setLocale(locale.getLanguage());
 					setCheckBoxLocale(locale.getLanguage());
 					
-					loadConfig(System.getProperty("user.dir")+"/", false);
+					loadConfig(System.getProperty("user.dir")+"\\", false);
 					
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -282,7 +282,7 @@ public class Main {
 			    chooserPasta.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 			    chooserPasta.setAcceptAllFileFilterUsed(false);
 			    if (chooserPasta.showOpenDialog(frmPstoolsV) == JFileChooser.APPROVE_OPTION) {
-			    	loadConfig(chooserPasta.getSelectedFile().getAbsolutePath()+"/", true);
+			    	loadConfig(chooserPasta.getSelectedFile().getAbsolutePath()+"\\", true);
 			    }
 			}
 		});
@@ -1014,6 +1014,8 @@ public class Main {
 				config.cfgExibePreco = doc.getElementsByTagName("show_price").item(0).getTextContent();
 				config.cfgDeleteImagens = doc.getElementsByTagName("delete_images").item(0).getTextContent();
 				config.cfgSomenteOnline = doc.getElementsByTagName("only_online").item(0).getTextContent();
+				
+				System.out.println("Somente Online : " + doc.getElementsByTagName("only_online").item(0).getTextContent());
 				
 				int rows = model.getRowCount(); 
 		    	for(int i = rows - 1; i >=0; i--)

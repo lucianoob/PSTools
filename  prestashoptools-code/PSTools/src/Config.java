@@ -30,7 +30,7 @@ import java.awt.Font;
 public class Config extends JFrame {
 	
 	private JFrame config;
-	public String cfgAtivo = "1", cfgOferta = "0", cfgDisponivel = "1", cfgExibePreco = "1", cfgDeleteImagens = "1", cfgSomenteOnline = "1";
+	public String cfgAtivo = "1", cfgOferta = "0", cfgDisponivel = "1", cfgExibePreco = "1", cfgDeleteImagens = "1", cfgSomenteOnline = "0";
 	private JCheckBox chckbxAtivo;
 	private JCheckBox chckbxEmOferta;
 	private JCheckBox chckbxDisponvel;
