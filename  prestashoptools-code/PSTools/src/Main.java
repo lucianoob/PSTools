@@ -82,6 +82,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -127,7 +128,7 @@ public class Main {
 	private static ResourceBundle messages;
 	private static Locale locale;
 	private static String appTitle;
-	private static String appVersion = "v2.24";
+	private static String appVersion = "v2.68";
 	private static String appDescription;
 	private static String appDeveloper;
 	private static String appConfigFile = "pstools.cfg";
@@ -166,9 +167,7 @@ public class Main {
 	private static JMenuItem mntmSuporte;
 	private static JMenuItem mntmUpdate;
 	private static JMenuItem mntmContedo;
-	private static JMenuItem mntmGerarCdigos;
 	private static JLabel lblStatus;
-	private Codes gerarCodigos;
 	private static JMenuItem mntmLerconfiguraes;
 	private static JMenuItem mntmSalvarConfiguracoes;
 	private static JLabel lblConfig;
@@ -178,6 +177,7 @@ public class Main {
 	private String textToCopy;
 	private int linhaSelecionada;
 	private int colunaSelecionada;
+	private static JButton btnCdigo;
 
 	/**
 	 * Launch the application.
@@ -336,26 +336,6 @@ public class Main {
 		});
 		mnIdioma.add(chckbxmntmEspanhol);
 		
-		
-		mntmGerarCdigos = new JMenuItem();
-		mntmGerarCdigos.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
-		mntmGerarCdigos.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				gerarCodigos = new Codes(messages, textFieldCaminho.getText());
-				gerarCodigos.addComponentListener(new ComponentListener() {
-					public void componentHidden(ComponentEvent arg0) {
-						listPhotos(gerarCodigos.folder);					
-					}
-					public void componentMoved(ComponentEvent arg0) {}
-					public void componentResized(ComponentEvent arg0) {}
-					public void componentShown(ComponentEvent arg0) {}
-				});
-				gerarCodigos.setVisible(true);
-			}
-		});
-		mntmGerarCdigos.setIcon(new ImageIcon(Main.class.getResource("/assets/code.png")));
-		mntmGerarCdigos.setFont(new Font("Verdana", Font.BOLD, 14));
-		mnFerramentas.add(mntmGerarCdigos);
 		mntmConfiguraes = new JMenuItem();
 		mntmConfiguraes.setIcon(new ImageIcon(Main.class.getResource("/assets/config.png")));
 		mntmConfiguraes.setFont(new Font("Verdana", Font.BOLD, 14));
@@ -496,9 +476,9 @@ public class Main {
 				FormFactory.RELATED_GAP_COLSPEC,
 				ColumnSpec.decode("max(30dlu;default)"),
 				FormFactory.RELATED_GAP_COLSPEC,
-				ColumnSpec.decode("max(96dlu;default):grow"),
+				ColumnSpec.decode("max(30dlu;default)"),
 				FormFactory.RELATED_GAP_COLSPEC,
-				ColumnSpec.decode("max(82dlu;default)"),
+				ColumnSpec.decode("max(110dlu;default):grow"),
 				FormFactory.RELATED_GAP_COLSPEC,
 				ColumnSpec.decode("max(121dlu;default)"),
 				FormFactory.RELATED_GAP_COLSPEC,},
@@ -612,7 +592,7 @@ public class Main {
 				}
 			}
 		});
-		frmPstoolsV.getContentPane().add(btnCategoria, "6, 10, left, default");
+		frmPstoolsV.getContentPane().add(btnCategoria, "8, 10, left, fill");
 		
 		btnPreco = new JButton();
 		btnPreco.setFont(new Font("Dialog", Font.BOLD, 14));
@@ -634,9 +614,10 @@ public class Main {
 			}
 		});
 		btnPreco.setEnabled(false);
-		frmPstoolsV.getContentPane().add(btnPreco, "8, 10, left, default");
+		frmPstoolsV.getContentPane().add(btnPreco, "10, 10, left, fill");
 		
 		btnPeso = new JButton();
+		btnPeso.setEnabled(false);
 		btnPeso.setFont(new Font("Dialog", Font.BOLD, 14));
 		btnPeso.setIcon(weight);
 		btnPeso.addMouseListener(new MouseAdapter() {
@@ -655,8 +636,7 @@ public class Main {
 				}
 			}
 		});
-		btnPeso.setEnabled(false);
-		frmPstoolsV.getContentPane().add(btnPeso, "10, 10, left, default");
+		frmPstoolsV.getContentPane().add(btnPeso, "12, 10, left, fill");
 		
 		btnQuantidade = new JButton();
 		btnQuantidade.setFont(new Font("Dialog", Font.BOLD, 14));
@@ -678,7 +658,7 @@ public class Main {
 			}
 		});
 		btnQuantidade.setEnabled(false);
-		frmPstoolsV.getContentPane().add(btnQuantidade, "12, 10, left, default");
+		frmPstoolsV.getContentPane().add(btnQuantidade, "14, 10, left, fill");
 		
 		btnSalvar = new JButton();
 		btnSalvar.setIcon(save_ok);
@@ -697,6 +677,88 @@ public class Main {
 				deleteImage();
 			}
 		});
+		
+		btnCdigo = new JButton();
+		btnCdigo.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				String codigo, primeiro, path = textFieldCaminho.getText(), file, extension, newName;
+				File folder = new File(path), image;
+				
+				rowsSelected = tableProdutos.getSelectedRows();
+				if(rowsSelected.length > 0) {
+					if(rowsSelected.length > 1) {
+						codigo = (String) JOptionPane.showInputDialog( frmPstoolsV, messages.getString("code_reference"), messages.getString("code_title_reference"), JOptionPane.QUESTION_MESSAGE, null, null, "REF###");
+						primeiro = (String) JOptionPane.showInputDialog(frmPstoolsV, messages.getString("code_first"), messages.getString("code_title_first"), JOptionPane.QUESTION_MESSAGE, null, null, "1");
+						if(codigo != null && !codigo.equals("") && primeiro != null && !primeiro.equals("") ) {
+					        int padding = codigo.length() - codigo.replace("#", "").length(), counter;
+					        if(padding == 0)
+					        	padding = 3;
+					        codigo = codigo.replace("#", "");
+			
+					        for (int k = 0; k < rowsSelected.length; k++) {
+				            	counter = Integer.parseInt(primeiro)+k;
+				            	model.setValueAt(codigo+String.format("%0"+padding+"d", counter), rowsSelected[k], 0);
+								file = (String) model.getValueAt(rowsSelected[k], 7);
+				            	String[] images = file.split(",");
+								String newNames = "";
+								if(images.length > 1) {
+									for(int i=0; i<images.length; i++) {
+										image = new File(path+"\\"+images[i]);
+										extension = images[i].substring(images[i].lastIndexOf("."), images[i].length());
+										newName = codigo+String.format("%0"+padding+"d", counter)+"-"+(i+1)+extension;
+										image.renameTo(new File(path+"\\"+newName));
+										if(i>0)
+											newNames += ",";
+										newNames += newName;
+									}
+								} else {
+									image = new File(path+"\\"+images[0]);
+									extension = images[0].substring(images[0].lastIndexOf("."), images[0].length());
+									newName = codigo+String.format("%0"+padding+"d", counter)+extension;
+									image.renameTo(new File(path+"\\"+newName));
+									newNames += newName;
+								}
+								model.setValueAt(newNames, rowsSelected[k], 7);
+					        }
+					        JOptionPane.showMessageDialog(frmPstoolsV, messages.getString("code_message_generate"), messages.getString("code_title_generate"), JOptionPane.INFORMATION_MESSAGE);
+						}
+					} else {
+						codigo = (String) JOptionPane.showInputDialog(frmPstoolsV, messages.getString("code_reference_one"), messages.getString("code_title_reference"), JOptionPane.QUESTION_MESSAGE, null, null, "REF001");
+						if(codigo != null && !codigo.equals("")) {
+							model.setValueAt(codigo, rowsSelected[0], 0);
+							file = (String) model.getValueAt(rowsSelected[0], 7);
+							String[] images = file.split(",");
+							String newNames = "";
+							if(images.length > 1) {
+								for(int i=0; i<images.length; i++) {
+									image = new File(path+"\\"+images[i]);
+									extension = images[i].substring(images[i].lastIndexOf("."), images[i].length());
+									newName = codigo+"-"+(i+1)+extension;
+									image.renameTo(new File(path+"\\"+newName));
+									if(i>0)
+										newNames += ",";
+									newNames += newName;
+								}
+							} else {
+								image = new File(path+"\\"+images[0]);
+								extension = images[0].substring(images[0].lastIndexOf("."), images[0].length());
+								newName = codigo+extension;
+								image.renameTo(new File(path+"\\"+newName));
+								newNames += newName;
+							}
+							model.setValueAt(newNames, rowsSelected[0], 7);
+							JOptionPane.showMessageDialog(frmPstoolsV, messages.getString("code_message_generate"), messages.getString("code_title_generate"), JOptionPane.INFORMATION_MESSAGE);
+						}
+					}
+				}
+			}
+		});
+		btnCdigo.setEnabled(false);
+		btnCdigo.setFont(new Font("Dialog", Font.BOLD, 14));
+		btnCdigo.setIcon(new ImageIcon(Main.class.getResource("/assets/code.png")));
+		btnCdigo.setSelectedIcon(new ImageIcon(Main.class.getResource("/assets/code.png")));
+		frmPstoolsV.getContentPane().add(btnCdigo, "6, 10, left, fill");
 		
 		btnRemover.setEnabled(false);
 		frmPstoolsV.getContentPane().add(btnRemover, "16, 10, right, default");
@@ -741,7 +803,7 @@ public class Main {
 						dateFormat = new SimpleDateFormat("dd-MM-yyyy HH-mm-ss");
 					
 					Date date = new Date();
-					String filename = diretorio+"prestashop_"+dateFormat.format(date)+".csv";
+					String filename = textFieldCaminho.getText()+"\\prestashop_"+dateFormat.format(date)+".csv";
 					
 				    FileWriter writer = new FileWriter(new File(filename));
 				    
@@ -838,7 +900,7 @@ public class Main {
 	            viewImage(linhaSelecionada);
 	            if(linhaSelecionada != -1) {
 		        	textToCopy = ((String)tableProdutos.getValueAt(linhaSelecionada, colunaSelecionada));
-		        	System.out.println("Text: " + textToCopy + " Row: " + linhaSelecionada + " Column: " + colunaSelecionada);
+		        	//System.out.println("Text: " + textToCopy + " Row: " + linhaSelecionada + " Column: " + colunaSelecionada);
 		        	if(textToCopy != "") {
 		        		btnAcima.setEnabled(true);
 		        		btnAbaixo.setEnabled(true);
@@ -1154,17 +1216,16 @@ public class Main {
     	String extension = "";
     	Collections.sort(files);
     	for (File file : files) {
-    		extension = file.getName().substring(file.getName().lastIndexOf("."), file.getName().length());
-    		
-    		//System.out.println(extension);
-    		
-    		if(file.getName().indexOf("-ORIGINAL") == -1 && extensions.contains(extension.toLowerCase())) {
-	    		String[] filename = file.getName().replace(extension, "").split("-");
-	    		if(!filenames.contains((String) filename[0])) { 
-	    			filenames.add(filename[0]);
-	    			fotos.add(file.getName());
-	    		} else {
-    				fotos.set(filenames.indexOf(filename[0]), fotos.get(filenames.indexOf(filename[0]))+","+file.getName());
+    		if(file.isFile()) {
+	    		extension = file.getName().substring(file.getName().lastIndexOf("."), file.getName().length());
+	    		if(file.getName().indexOf("-ORIGINAL") == -1 && extensions.contains(extension.toLowerCase())) {
+		    		String[] filename = file.getName().replace(extension, "").split("-");
+		    		if(!filenames.contains((String) filename[0])) { 
+		    			filenames.add(filename[0]);
+		    			fotos.add(file.getName());
+		    		} else {
+	    				fotos.set(filenames.indexOf(filename[0]), fotos.get(filenames.indexOf(filename[0]))+","+file.getName());
+		    		}
 	    		}
     		}
     	}
@@ -1194,16 +1255,16 @@ public class Main {
 				
 				int delete = JOptionPane.showConfirmDialog(frmPstoolsV, messages.getString("confirm_delete_images"), messages.getString("confirm_delete_title"), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 				for (int j = rowsSelected.length-1; j >= 0; j--) {
-					model.removeRow(rowsSelected[j]);
 					if(delete == JOptionPane.YES_OPTION) {
 						termFoto = ((String) tableProdutos.getValueAt(rowsSelected[j], 7)).split(",");
 						for (int k = 0; k < termFoto.length; k++) {
-				            fileFoto = new File(textFieldCaminho.getText()+"/"+termFoto[k]);
-				            System.out.println(fileFoto.getAbsolutePath());
+				            fileFoto = new File(textFieldCaminho.getText()+"\\"+termFoto[k]);
+				            //System.out.println(fileFoto.getAbsolutePath());
 				            if(fileFoto.exists())
 				            	fileFoto.delete();
 						}
 					}
+					model.removeRow(rowsSelected[j]);
 				}
 				lblStatus.setText(MessageFormat.format(messages.getString("status_total_products"), model.getRowCount()));
 				btnRemover.setEnabled(false);
@@ -1226,6 +1287,7 @@ public class Main {
 	        	btnPreco.setEnabled(true);
 	    		btnPeso.setEnabled(true);
 	    		btnQuantidade.setEnabled(true);
+	    		btnCdigo.setEnabled(true);
 	        	
 	            String path;
 	            File fileFoto; 
@@ -1363,7 +1425,6 @@ public class Main {
 		mntmSalvarConfiguracoes.setText(messages.getString("config_save"));
 		mntmLerconfiguraes.setText(messages.getString("config_load"));
 		mntmSair.setText(messages.getString("menuitem_exit"));
-		mntmGerarCdigos.setText(messages.getString("code_title"));
 		mnFerramentas.setText(messages.getString("menu_tools"));
 		mnIdioma.setText(messages.getString("menu_language"));
 		chckbxmntmPortugus.setText(messages.getString("menuitem_pt"));
@@ -1394,6 +1455,7 @@ public class Main {
 		btnPeso.setText(messages.getString("button_weight"));
 		btnPreco.setText(messages.getString("button_price"));
 		btnQuantidade.setText(messages.getString("button_quantity"));
+		btnCdigo.setText(messages.getString("button_code"));
 		btnRemover.setText(messages.getString("button_delete"));
 		btnSalvar.setText(messages.getString("button_save"));
 		btnExportar.setText(messages.getString("button_export"));
